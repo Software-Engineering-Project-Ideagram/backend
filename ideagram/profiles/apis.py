@@ -6,15 +6,18 @@ from rest_framework import serializers
 
 from django.core.validators import MinLengthValidator
 from .validators import number_validator, special_char_exist_validator, letter_validator
-from .models import Profile
+from .models import Profile, ProfileLinks
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from drf_spectacular.utils import extend_schema
 from ideagram.profiles.services import register
 from ideagram.api.mixins import ApiAuthMixin
+from .selectors import get_user_profile, get_profile_social_media
+
 from ideagram.common.models import Address
 from ideagram.common.utils import inline_model_serializer
 
 BASE_USER = get_user_model()
+
 class RegisterApi(APIView):
     class InputRegisterSerializer(serializers.Serializer):
         email = serializers.EmailField(max_length=255)
@@ -66,3 +69,39 @@ class RegisterApi(APIView):
         )
 
         return Response(self.OutPutRegisterSerializer(user, context={"request": request}).data)
+
+
+class UserProfileApi(ApiAuthMixin, APIView):
+
+    class OutPutUserProfileSerializer(serializers.ModelSerializer):
+        address = inline_model_serializer(
+            serializer_model=Address,
+            model_fields=[
+                'country', 'state', 'city', 'address', 'zip_code'
+            ]
+        )
+
+        class Meta:
+            model = Profile
+            fields = ("username", "profile_image", "first_name", "last_name", "gender", "birth_date", "address", "bio"
+                      , "follower_count", "following_count", "idea_count", "is_public", "is_active", "is_banned")
+
+    @extend_schema(responses=OutPutUserProfileSerializer, tags=['User'])
+    def get(self, request):
+        query = get_user_profile(user=request.user)
+        return Response(self.OutPutUserProfileSerializer(query, context={"request": request}).data)
+
+
+class UserProfileSocialMediaApi(ApiAuthMixin, APIView):
+    class OutputSocialMediaSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = ProfileLinks
+            fields = ['uuid', 'type', 'link', 'priority']
+
+    @extend_schema(responses=OutputSocialMediaSerializer, tags=['User'])
+    def get(self, request):
+        profile = get_user_profile(user=request.user)
+        social_media = get_profile_social_media(profile=profile)
+        serializer = self.OutputSocialMediaSerializer(instance=social_media, many=True)
+        return Response(data=serializer.data)
+

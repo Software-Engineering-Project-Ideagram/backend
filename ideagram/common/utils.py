@@ -69,3 +69,18 @@ def profile_upload_image_path(instance, filename):
         str(instance.id),
         f'{str(instance.username)}_{round(timezone.time() * 1000)}.{ext}'
     )
+
+
+def inline_model_serializer(*, serializer_model, model_fields, data=None, **kwargs):
+    class TempSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = serializer_model
+            fields = model_fields
+
+    if data is not None:
+        return TempSerializer(data=data, **kwargs)
+
+    return TempSerializer(**kwargs)
+
+
+

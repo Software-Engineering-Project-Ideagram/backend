@@ -24,7 +24,7 @@ class Profile(BaseModel, models.Model):
     first_name = models.CharField(max_length=128, null=True, blank=True)
     last_name = models.CharField(max_length=128, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=15, choices=__GENDER_CHOICES)
+    gender = models.CharField(max_length=15, choices=__GENDER_CHOICES, default='other')
 
     bio = models.CharField(max_length=512, null=True, blank=True)
     address = models.OneToOneField(Address, on_delete=models.SET_NULL, null=True, blank=True)

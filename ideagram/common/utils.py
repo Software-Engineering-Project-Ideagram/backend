@@ -4,6 +4,8 @@ from django.http import Http404
 from django.core.exceptions import ImproperlyConfigured
 
 from rest_framework import serializers
+import os
+from django.utils import timezone
 
 
 def make_mock_object(**kwargs):
@@ -57,3 +59,13 @@ def assert_settings(required_settings, error_message_prefix=""):
         raise ImproperlyConfigured(f"{error_message_prefix} Could not find: {stringified_not_present}")
 
     return values
+
+
+def profile_upload_image_path(instance, filename):
+    """Save profile image in PROJECT_ROOT/media/profile_pics/INSTANCE_ID directory"""
+    ext = filename.split('.')[-1]
+    return os.path.join(
+        "profile_pics",
+        str(instance.id),
+        f'{str(instance.username)}_{round(timezone.time() * 1000)}.{ext}'
+    )

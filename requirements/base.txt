@@ -17,3 +17,4 @@ drf-spectacular==0.26.1
 
 django-redis==5.2.0
 pillow==9.4.0
+uuid==1.30

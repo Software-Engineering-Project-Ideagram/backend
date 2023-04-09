@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth import get_user_model
 from django.db import models
 
@@ -48,3 +49,18 @@ class Profile(BaseModel, models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class ProfileLinks(models.Model):
+
+    LINK_TYPES = ['github', 'gitlab', 'telegram', 'linkedin', 'instagram', 'facebook', 'twitter']
+    __LINK_TYPE_CHOICES = [(i, i) for i in LINK_TYPES]
+
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    type = models.CharField(max_length=15, choices=__LINK_TYPE_CHOICES)
+    link = models.URLField(max_length=500)
+    priority = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = ('profile', 'type')

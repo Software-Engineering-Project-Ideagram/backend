@@ -1,15 +1,11 @@
 from typing import Sequence, Type, TYPE_CHECKING
 
-from importlib import import_module
-
-from django.conf import settings
-
-from django.contrib import auth
-
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.authentication import BaseAuthentication
 
-from rest_framework_simplejwt.authentication import JWTAuthentication 
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from ideagram.api.permissions import IsProfileActive
 
 
 def get_auth_header(headers):
@@ -37,4 +33,8 @@ class ApiAuthMixin:
     authentication_classes: Sequence[Type[BaseAuthentication]] = [
             JWTAuthentication,
     ]
-    permission_classes: PermissionClassesType = (IsAuthenticated, )
+    permission_classes: PermissionClassesType = (IsProfileActive, )
+
+
+class ActiveProfileMixin(ApiAuthMixin):
+    permission_classes: PermissionClassesType = (IsProfileActive,)

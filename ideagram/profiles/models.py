@@ -43,6 +43,11 @@ class Profile(BaseModel, models.Model):
     def is_visible(self):
         return self.is_public and self.is_active and not self.is_banned
 
+
+    @property
+    def is_profile_active(self):
+        return self.is_active and self.is_banned
+
     def __str__(self):
         return f"{self.user} >> {self.username}"
 

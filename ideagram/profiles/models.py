@@ -16,8 +16,6 @@ class Profile(BaseModel, models.Model):
     __GENDER_CHOICES = [(i, i) for i in GENDER_TYPES]
 
 
-
-
     user = models.OneToOneField(BASE_USER, on_delete=models.CASCADE)
     username = models.CharField(max_length=128, unique=True, validators=[
         special_char_not_exist_validator

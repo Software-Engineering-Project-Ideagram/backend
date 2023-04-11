@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from .models import Profile
+from ..common.utils import update_model_instance
 
 BASE_USER = get_user_model()
 
@@ -19,3 +20,8 @@ def register(*, username: str, email: str, password: str) -> BASE_USER:
     create_profile(user=user, username=username)
 
     return user
+
+
+def update_user_profile(*,profile:Profile, data: dict) -> Profile:
+    updated_profile = update_model_instance(instance=profile, data=data)
+    return updated_profile

@@ -21,6 +21,7 @@ LOCAL_APPS = [
     'ideagram.users.apps.UsersConfig',
     'ideagram.authentication.apps.AuthenticationConfig',
     'ideagram.profiles.apps.ProfilesConfig',
+    'ideagram.reports.apps.ReportsConfig',
 ]
 
 THIRD_PARTY_APPS = [

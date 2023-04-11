@@ -33,7 +33,7 @@ class ApiAuthMixin:
     authentication_classes: Sequence[Type[BaseAuthentication]] = [
             JWTAuthentication,
     ]
-    permission_classes: PermissionClassesType = (IsProfileActive, )
+    permission_classes: PermissionClassesType = (IsAuthenticated, )
 
 
 class ActiveProfileMixin(ApiAuthMixin):

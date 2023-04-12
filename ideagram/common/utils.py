@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import Model
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.core.exceptions import ImproperlyConfigured
@@ -6,6 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 from rest_framework import serializers
 import os
 from django.utils import timezone
+from rest_framework.utils import model_meta
 
 
 def make_mock_object(**kwargs):
@@ -83,4 +85,23 @@ def inline_model_serializer(*, serializer_model, model_fields, data=None, **kwar
     return TempSerializer(**kwargs)
 
 
+def update_model_instance(*, instance: Model, data: dict) -> Model:
+    """Updates given model instance using given data"""
+    info = model_meta.get_field_info(instance)
+
+    many_to_many_fields = []
+    for attr, value in data.items():
+        if attr in info.relations and info.relations[attr].to_many:
+            many_to_many_fields.append((attr, value))
+        else:
+            setattr(instance, attr, value)
+
+    instance.save()
+
+
+    for attr, value in many_to_many_fields:
+        field = getattr(instance, attr)
+        field.set(value)
+
+    return instance
 

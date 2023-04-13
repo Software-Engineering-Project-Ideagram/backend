@@ -73,6 +73,16 @@ def profile_upload_image_path(instance, filename):
     )
 
 
+def idea_upload_image_path(instance, filename):
+    """Save idea images in PROJECT_ROOT/media/idea_pics/INSTANCE_ID directory"""
+    ext = filename.split('.')[-1]
+    return os.path.join(
+        "idea_pics",
+        str(instance.id),
+        f'{str(instance.username)}_{round(timezone.time() * 1000)}.{ext}'
+    )
+
+
 def inline_model_serializer(*, serializer_model, model_fields, data=None, **kwargs):
     class TempSerializer(serializers.ModelSerializer):
         class Meta:

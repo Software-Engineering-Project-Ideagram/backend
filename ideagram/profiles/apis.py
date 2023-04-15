@@ -76,11 +76,12 @@ class UserProfileApi(ApiAuthMixin, APIView):
 
     class OutPutUserProfileSerializer(serializers.ModelSerializer):
         address = inline_model_serializer(
+            serializer_name="user_profile_address_serializer",
             serializer_model=Address,
             model_fields=[
                 'country', 'state', 'city', 'address', 'zip_code'
             ]
-        )
+        )()
 
         class Meta:
             model = Profile

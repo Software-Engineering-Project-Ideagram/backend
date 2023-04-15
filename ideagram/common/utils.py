@@ -83,16 +83,16 @@ def idea_upload_image_path(instance, filename):
     )
 
 
-def inline_model_serializer(*, serializer_model, model_fields, data=None, **kwargs):
-    class TempSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = serializer_model
-            fields = model_fields
+def inline_model_serializer(*, serializer_model: Model, serializer_name: str, model_fields: list | str,
+                            serializer_custom_fields: dict | None = None):
+    if serializer_custom_fields:
+        serializer_custom_fields['Meta'] = type('Meta', (object,), {"model": serializer_model, 'fields': model_fields})
+    else:
+        serializer_custom_fields = {'Meta': type('Meta', (object,), {"model": serializer_model, 'fields': model_fields})}
 
-    if data is not None:
-        return TempSerializer(data=data, **kwargs)
+    serializer_class = type(serializer_name, (serializers.ModelSerializer,), serializer_custom_fields)
 
-    return TempSerializer(**kwargs)
+    return serializer_class
 
 
 def update_model_instance(*, instance: Model, data: dict) -> Model:

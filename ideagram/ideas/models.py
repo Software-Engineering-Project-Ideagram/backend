@@ -38,3 +38,13 @@ class Idea(BaseModel):
     show_comments = models.BooleanField(default=True)
 
 
+class EvolutionStep(models.Model):
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    title = models.CharField(max_length=50)
+    finish_date = models.DateField()
+    description = models.CharField(max_length=200)
+    priority = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = ('idea', 'priority')

@@ -52,3 +52,4 @@ class IdeaCreateAPI(ActiveProfileMixin, APIView):
         idea = create_idea(profile=profile, data=serializer.validated_data)
         output_serializer = self.OutputIdeaCreateSerializer(instance=idea)
         return Response(data=output_serializer.data)
+

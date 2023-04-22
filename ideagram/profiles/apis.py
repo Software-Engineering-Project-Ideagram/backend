@@ -15,6 +15,7 @@ from .selectors import get_user_profile, get_profile_social_media, get_profile_u
 
 from ideagram.common.models import Address
 from ideagram.common.utils import inline_model_serializer
+from ..users.Exceptions import InvalidPassword
 
 BASE_USER = get_user_model()
 
@@ -76,11 +77,12 @@ class UserProfileApi(ApiAuthMixin, APIView):
 
     class OutPutUserProfileSerializer(serializers.ModelSerializer):
         address = inline_model_serializer(
+            serializer_name="user_profile_address_serializer",
             serializer_model=Address,
             model_fields=[
                 'country', 'state', 'city', 'address', 'zip_code'
             ]
-        )
+        )()
 
         class Meta:
             model = Profile
@@ -88,21 +90,41 @@ class UserProfileApi(ApiAuthMixin, APIView):
                       , "follower_count", "following_count", "idea_count", "is_public", "is_active", "is_banned")
 
     class InputUpdateUserProfileSerializer(serializers.ModelSerializer):
+        old_password = serializers.CharField(
+            max_length=256,
+            validators=[
+                number_validator,
+                letter_validator,
+                special_char_exist_validator,
+                MinLengthValidator(limit_value=8)
+            ],
+            required=False
+        )
+        new_password = serializers.CharField(
+            max_length=256,
+            validators=[
+                number_validator,
+                letter_validator,
+                special_char_exist_validator,
+                MinLengthValidator(limit_value=8)
+            ],
+            required=False
+        )
         class Meta:
             model = Profile
-            fields = ['username', 'first_name', 'last_name', 'birth_date', 'gender', 'bio', 'address', 'profile_image',
-                      'is_public']
+            optional_fields = ['username', 'first_name', 'last_name', 'birth_date', 'gender', 'bio', 'address', 'profile_image',
+                      'is_public', 'old_password', 'new_password']
+            required_fields = []
+            fields = [*optional_fields, *required_fields]
 
-            extra_kwargs = {'username': {'required': False},
-                            'first_name': {'required': False},
-                            'last_name': {'required': False},
-                            'birth_date': {'required': False},
-                            'gender': {'required': False},
-                            'bio': {'required': False},
-                            'address': {'required': False},
-                            'profile_image': {'required': False},
-                            'is_public': {'required': False},
-                            }
+            extra_kwargs = dict((x, {'required': False}) for x in optional_fields)
+
+        def validate(self, attrs):
+            super().validate(attrs=attrs)
+            if attrs.get('new_password', None) and attrs.get('old_password', None) is None:
+                raise serializers.ValidationError("You must enter old password")
+
+            return super().validate(attrs=attrs)
 
         def validate_username(self, username):
             profile = get_profile_using_username(username=username)
@@ -122,7 +144,11 @@ class UserProfileApi(ApiAuthMixin, APIView):
         serializer.is_valid(raise_exception=True)
         user_profile = get_user_profile(user=request.user)
 
-        updated_profile = update_user_profile(profile=user_profile, data=serializer.validated_data)
+        try:
+            updated_profile = update_user_profile(profile=user_profile, data=serializer.validated_data)
+        except InvalidPassword as ex:
+            return Response("Invalid old password", status=status.HTTP_400_BAD_REQUEST)
+
         update_serializer = self.OutPutUserProfileSerializer(instance=updated_profile)
         return Response(data=update_serializer.data)
 

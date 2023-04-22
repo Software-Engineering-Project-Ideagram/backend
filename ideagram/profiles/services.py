@@ -1,7 +1,8 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.db import transaction
 from .models import Profile
 from ..common.utils import update_model_instance
+from ..users.Exceptions import InvalidPassword
 
 BASE_USER = get_user_model()
 
@@ -22,6 +23,15 @@ def register(*, username: str, email: str, password: str) -> BASE_USER:
     return user
 
 
-def update_user_profile(*,profile:Profile, data: dict) -> Profile:
+@transaction.atomic
+def update_user_profile(*, profile: Profile, data: dict) -> Profile:
+    if data.get('new_password', None):
+        user = authenticate(email=profile.user.email, password=data['old_password'])
+        if user:
+            user.set_password(data['new_password'])
+            user.save()
+        else:
+            raise InvalidPassword("Invalid password")
+
     updated_profile = update_model_instance(instance=profile, data=data)
     return updated_profile

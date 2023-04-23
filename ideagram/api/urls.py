@@ -4,4 +4,5 @@ urlpatterns = [
     path('auth/', include('ideagram.authentication.urls')),
     path('user/', include("ideagram.profiles.urls")),
     path('idea/', include("ideagram.ideas.urls")),
+    path('report/', include("ideagram.reports.urls")),
     ]

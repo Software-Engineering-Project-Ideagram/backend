@@ -70,7 +70,8 @@ class RegisterApi(APIView):
             username=serializer.validated_data.get("username"),
         )
 
-        return Response(self.OutPutRegisterSerializer(user, context={"request": request}).data)
+        return Response(self.OutPutRegisterSerializer(user, context={"request": request}).data
+                        , status=status.HTTP_201_CREATED)
 
 
 class UserProfileApi(ApiAuthMixin, APIView):

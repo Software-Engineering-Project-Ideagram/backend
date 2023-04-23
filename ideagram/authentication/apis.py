@@ -17,6 +17,7 @@ class LoginView(APIView):
     class OutputLoginSerializer(serializers.Serializer):
         refresh = serializers.CharField()
         access = serializers.CharField()
+
     @extend_schema(request=InputLoginSerializer, responses=OutputLoginSerializer, tags=['Auth'])
     def post(self, request):
         serializer = self.InputLoginSerializer(data=request.data)
@@ -26,9 +27,6 @@ class LoginView(APIView):
         output_serializer = self.OutputLoginSerializer(data=data)
         output_serializer.is_valid(raise_exception=True)
         return Response(output_serializer.validated_data, status=status.HTTP_200_OK)
-
-
-
 
 
 class TokenRefreshView(TokenViewBase):
@@ -41,4 +39,4 @@ class TokenRefreshView(TokenViewBase):
 
     @extend_schema(tags=['Auth'])
     def post(self, request, *args, **kwargs):
-        super().post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)

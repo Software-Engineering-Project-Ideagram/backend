@@ -48,3 +48,19 @@ class EvolutionStep(models.Model):
 
     class Meta:
         unique_together = ('idea', 'priority')
+
+
+class FinancialStep(models.Model):
+    FINANCIAL_UNIT_TYPES = ['rial', 'dollar', 'euro']
+    __FINANCIAL_UNIT_CHOICES = [(x, x.lower()) for x in FINANCIAL_UNIT_TYPES]
+
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    title = models.CharField(max_length=50)
+    cost = models.PositiveIntegerField()
+    description = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, choices=__FINANCIAL_UNIT_CHOICES)
+    priority = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = ('idea', 'priority')

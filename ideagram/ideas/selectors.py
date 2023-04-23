@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 
-from ideagram.ideas.models import Classification, Idea, EvolutionStep
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep
 from ideagram.users.models import BaseUser
 
 
@@ -38,3 +38,20 @@ def get_evolutionary_step_by_uuid(*, uuid: str, user: BaseUser = None) -> Evolut
     else:
         return None
 
+
+def get_idea_financial_steps(*, idea: Idea) -> QuerySet(FinancialStep):
+
+    steps = FinancialStep.objects.filter(idea=idea)
+    return steps
+
+
+def get_financial_step_by_uuid(*, uuid: str, user: BaseUser = None) -> FinancialStep | None:
+    if user:
+        step = FinancialStep.objects.filter(uuid=uuid, idea__profile__user=user)
+    else:
+        step = FinancialStep.objects.filter(uuid=uuid)
+
+    if step.exists():
+        return step.first()
+    else:
+        return None

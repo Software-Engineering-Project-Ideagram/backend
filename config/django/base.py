@@ -22,6 +22,9 @@ LOCAL_APPS = [
     'ideagram.authentication.apps.AuthenticationConfig',
     'ideagram.profiles.apps.ProfilesConfig',
     'ideagram.ideas.apps.IdeasConfig',
+    'ideagram.emails.apps.EmailsConfig',
+    'ideagram.reports.apps.ReportsConfig',
+
 ]
 
 THIRD_PARTY_APPS = [
@@ -132,6 +135,9 @@ USE_TZ = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',

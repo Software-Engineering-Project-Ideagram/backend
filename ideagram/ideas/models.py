@@ -75,3 +75,7 @@ class IdeaComment(models.Model):
     comment = models.CharField(max_length=1000)
 
 
+class Following(models.Model):
+    date = models.DateField(auto_now_add=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_follower')
+    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_following')

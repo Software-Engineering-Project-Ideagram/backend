@@ -67,3 +67,9 @@ class ProfileLinks(models.Model):
 
     class Meta:
         unique_together = ('profile', 'type')
+
+
+class Following(models.Model):
+    date = models.DateField(auto_now_add=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_follower')
+    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_following')

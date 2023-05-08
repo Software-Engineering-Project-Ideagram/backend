@@ -11,7 +11,7 @@ from ideagram.ideas.models import Classification, Idea, EvolutionStep, Financial
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, like_idea
+    create_financial_step, update_financial_step, like_idea, unlike_idea
 from ideagram.profiles.selectors import get_user_profile
 
 
@@ -317,3 +317,8 @@ class IdeaLikeApi(APIView):
         if temp is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_201_CREATED)
+
+    @extend_schema(tags=['Idea Like'])
+    def delete(self, request, idea_uuid):
+        unlike_idea(idea_uuid=idea_uuid, user=request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)

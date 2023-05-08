@@ -57,3 +57,12 @@ def like_idea(*, idea_uuid: str, user_id: str):
         return IdeaLikes.objects.create(idea_id=idea_uuid, profile_id=user_id)
     except IntegrityError:
         return None
+
+
+@transaction.atomic
+def unlike_idea(*, idea_uuid: str, user):
+    try:
+        entry = IdeaLikes.objects.get(uuid=idea_uuid, user=user)
+        entry.delete()
+    except IdeaLikes.DoesNotExist:
+        return None

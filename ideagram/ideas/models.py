@@ -75,3 +75,13 @@ class IdeaComment(models.Model):
     comment = models.CharField(max_length=1000)
 
 
+class IdeaLikes(models.Model):
+
+    date = models.DateField(auto_now_add=True)
+    profile_id = models.ForeignKey(to=Profile, on_delete=models.CASCADE)
+    idea_id = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('profile_id', 'idea_id')
+
+

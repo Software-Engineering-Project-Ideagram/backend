@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db import IntegrityError
 
 from ideagram.common.utils import update_model_instance
-from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep
+from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep, IdeaLikes
 from ideagram.profiles.models import Profile
 
 
@@ -49,3 +49,11 @@ def create_financial_step(*, idea: Idea, financial_data: dict) -> FinancialStep 
 def update_financial_step(*, financial_step: FinancialStep, data: dict) -> FinancialStep:
     updated_step = update_model_instance(instance=financial_step, data=data)
     return updated_step
+
+
+@transaction.atomic
+def like_idea(*, idea_uuid: str, user_id: str):
+    try:
+        return IdeaLikes.objects.create(idea_id=idea_uuid, profile_id=user_id)
+    except IntegrityError:
+        return None

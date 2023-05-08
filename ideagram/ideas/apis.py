@@ -9,7 +9,7 @@ from ideagram.common.serializers import UUIDRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
-    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid
+    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
     create_financial_step, update_financial_step
 from ideagram.profiles.selectors import get_user_profile
@@ -302,3 +302,11 @@ class IdeaLikeApi(APIView):
             model = IdeaLikes
             fields = ['profile_id']
 
+    @extend_schema(responses=UserLikeSerializer(many=True), tags=['Idea Like'])
+    def get(self, request, idea_uuid):
+        try:
+            queryset = get_idea_likes(idea_uuid=idea_uuid, user=request.user)
+            serializer = self.UserLikeSerializer(queryset, many=True)
+            return Response(serializer.data)
+        except Idea.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)

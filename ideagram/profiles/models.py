@@ -71,5 +71,5 @@ class ProfileLinks(models.Model):
 
 class Following(models.Model):
     date = models.DateField(auto_now_add=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_follower')
-    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_following')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='user_profile')
+    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='following')

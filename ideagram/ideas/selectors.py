@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment
 from ideagram.users.models import BaseUser
 
 
@@ -55,3 +55,8 @@ def get_financial_step_by_uuid(*, uuid: str, user: BaseUser = None) -> Financial
         return step.first()
     else:
         return None
+
+
+def get_ideas_comment(*, idea: Idea) -> QuerySet(IdeaComment):
+    comments = IdeaComment.objects.filter(idea=idea)
+    return comments

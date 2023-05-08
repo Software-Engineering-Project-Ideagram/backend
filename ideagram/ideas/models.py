@@ -67,6 +67,7 @@ class FinancialStep(models.Model):
     class Meta:
         unique_together = ('idea', 'priority')
 
+
 class IdeaComment(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     date = models.DateTimeField(auto_now_add=True)

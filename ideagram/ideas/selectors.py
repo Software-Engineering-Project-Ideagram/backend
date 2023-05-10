@@ -1,5 +1,6 @@
 from django.db.models import QuerySet
 
+
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep
 from ideagram.users.models import BaseUser
 
@@ -18,6 +19,7 @@ def get_idea_by_uuid(*, uuid: str, user: BaseUser = None) -> Idea | None:
         return idea.first()
     else:
         return None
+      
 
 
 def get_idea_evolutionary_steps(*, idea: Idea) -> QuerySet(EvolutionStep):

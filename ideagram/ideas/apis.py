@@ -6,12 +6,14 @@ from rest_framework.views import APIView
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from ideagram.common.serializers import UUIDRelatedField
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest
+
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_collaboration_request, \
-    get_collaboration_request_by_uuid
+    get_collaboration_request_by_uuid, get_ideas_comment
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request
+    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, create_comment_for_idea
+
 from ideagram.profiles.selectors import get_user_profile
 
 
@@ -295,6 +297,39 @@ class IdeaFinancialDetailApi(ActiveProfileMixin, APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+class IdeaCommentApi(ActiveProfileMixin, APIView):
+    class InputIdeaCommentSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = IdeaComment
+            fields = ["comment"]
+
+    class OutputIdeaCommentSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = IdeaComment
+            fields = ["uuid", "date", "profile", "idea", 'comment']
+
+    @extend_schema(responses=OutputIdeaCommentSerializer(many=True), tags=["Comments"])
+    def get(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid)
+        if not idea.show_comments:
+            return Response(data={'message': "Idea's comments are hidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        comments = get_ideas_comment(idea=idea)
+        serializer = self.OutputIdeaCommentSerializer(instance=comments, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+    @extend_schema(request=InputIdeaCommentSerializer, responses=OutputIdeaCommentSerializer, tags=["Comments"])
+    def post(self, request, idea_uuid):
+        serializer = self.InputIdeaCommentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        idea = get_idea_by_uuid(uuid=idea_uuid)
+        profile = get_user_profile(user=request.user)
+        comment = create_comment_for_idea(idea=idea, profile=profile, data=serializer.validated_data)
+        output_serializer = self.OutputIdeaCommentSerializer(instance=comment)
+        return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
+
+      
 class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
     class InputIdeaCollaborationRequestSerializer(serializers.ModelSerializer):
 
@@ -375,3 +410,4 @@ class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
 
         request.delete()
         return Response(status=status.HTTP_200_OK)
+

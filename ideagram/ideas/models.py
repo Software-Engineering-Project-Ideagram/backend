@@ -28,13 +28,50 @@ class Idea(BaseModel):
     views_count = models.PositiveIntegerField(default=0)
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
-    max_donation = models.PositiveIntegerField(default=0)       # required donation
-    total_donation = models.PositiveIntegerField(default=0)     # total donation amount
+    max_donation = models.PositiveIntegerField(default=0)  # required donation
+    total_donation = models.PositiveIntegerField(default=0)  # total donation amount
 
     is_active = models.BooleanField(default=True)
     is_banned = models.BooleanField(default=False)
     show_likes = models.BooleanField(default=True)
     show_views = models.BooleanField(default=True)
     show_comments = models.BooleanField(default=True)
+
+
+
+class EvolutionStep(models.Model):
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    title = models.CharField(max_length=50)
+    finish_date = models.DateField()
+    description = models.CharField(max_length=200)
+    priority = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = ('idea', 'priority')
+
+
+
+class FinancialStep(models.Model):
+    FINANCIAL_UNIT_TYPES = ['rial', 'dollar', 'euro']
+    __FINANCIAL_UNIT_CHOICES = [(x, x.lower()) for x in FINANCIAL_UNIT_TYPES]
+
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    title = models.CharField(max_length=50)
+    cost = models.PositiveIntegerField()
+    description = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, choices=__FINANCIAL_UNIT_CHOICES)
+    priority = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = ('idea', 'priority')
+
+class IdeaComment(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    date = models.DateTimeField(auto_now_add=True)
+    profile = models.ForeignKey(to=Profile, on_delete=models.CASCADE)
+    idea = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=1000)
 
 

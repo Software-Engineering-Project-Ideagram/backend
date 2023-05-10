@@ -1,17 +1,19 @@
 from drf_spectacular.utils import extend_schema
+from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import serializers, status
 
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from ideagram.common.serializers import UUIDRelatedField
-from ideagram.common.utils import inline_serializer, inline_model_serializer
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment
+
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
-    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_ideas_comment
+    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_collaboration_request, \
+    get_collaboration_request_by_uuid, get_ideas_comment
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, create_comment_for_idea
+    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, create_comment_for_idea
+
 from ideagram.profiles.selectors import get_user_profile
 
 
@@ -116,6 +118,7 @@ class IdeaDetailView(ApiAuthMixin, APIView):
 class IdeaEvolutionStepApi(ActiveProfileMixin, APIView):
     class InputCreateEvolutionStepSerializer(serializers.ModelSerializer):
         priority = serializers.IntegerField(max_value=MAX_EVOLUTIONARY_STEPS_COUNT)
+
         class Meta:
             model = EvolutionStep
             fields = ['title', 'finish_date', 'description', 'priority']
@@ -191,7 +194,6 @@ class IdeaEvolutionDetail(ActiveProfileMixin, APIView):
         output_serializer = self.OutputEvolutionStepDetailSerializer(instance=updated_step)
         return Response(data=output_serializer.data)
 
-
     @extend_schema(tags=['Evolution Step'])
     def delete(self, request, evolution_uuid):
 
@@ -208,6 +210,7 @@ class IdeaEvolutionDetail(ActiveProfileMixin, APIView):
 class IdeaFinancialStepApi(ActiveProfileMixin, APIView):
     class InputCreateFinancialStepSerializer(serializers.ModelSerializer):
         priority = serializers.IntegerField(max_value=MAX_FINANCIAL_STEPS_COUNT)
+
         class Meta:
             model = FinancialStep
             fields = ['title', 'cost', 'description', 'priority', 'unit']
@@ -252,7 +255,7 @@ class IdeaFinancialStepApi(ActiveProfileMixin, APIView):
         return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
 
 
-class IdeaFinancialDetail(ActiveProfileMixin, APIView):
+class IdeaFinancialDetailApi(ActiveProfileMixin, APIView):
     class InputUpdateFinancialStepSerializer(serializers.ModelSerializer):
         class Meta:
             model = FinancialStep
@@ -282,7 +285,6 @@ class IdeaFinancialDetail(ActiveProfileMixin, APIView):
         updated_step = update_financial_step(financial_step=step, data=serializer.validated_data)
         output_serializer = self.OutputFinancialStepDetailSerializer(instance=updated_step)
         return Response(data=output_serializer.data)
-
 
     @extend_schema(tags=['Financial Step'])
     def delete(self, request, financial_uuid):
@@ -326,3 +328,86 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
         comment = create_comment_for_idea(idea=idea, profile=profile, data=serializer.validated_data)
         output_serializer = self.OutputIdeaCommentSerializer(instance=comment)
         return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
+
+      
+class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
+    class InputIdeaCollaborationRequestSerializer(serializers.ModelSerializer):
+
+        class Meta:
+            model = CollaborationRequest
+            fields = ['skills', 'age', 'education', 'description', 'salary']
+
+    class OutputCollaborationRequestSerializer(serializers.ModelSerializer):
+        idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
+
+        class Meta:
+            model = FinancialStep
+            fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
+
+    @extend_schema(responses=OutputCollaborationRequestSerializer, tags=['Collaboration Request'])
+    def get(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+        collaboration_request = get_idea_collaboration_request(idea=idea)
+        serializer = self.OutputCollaborationRequestSerializer(instance=collaboration_request, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(request=InputIdeaCollaborationRequestSerializer(),
+                   responses=OutputCollaborationRequestSerializer(),
+                   tags=['Collaboration Request'])
+    def post(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid, user=request.user)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.InputIdeaCollaborationRequestSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+
+        new_collaboration_request = create_collaboration_request(idea=idea, data=serializer.validated_data)
+
+        output_serializer = self.OutputCollaborationRequestSerializer(instance=new_collaboration_request)
+        return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
+    class InputUpdateCollaborationRequestSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = CollaborationRequest
+            optional_fields = ['skills', 'age', 'description', 'education','salary']
+            required_fields = []
+            fields = [*optional_fields, *required_fields]
+            extra_kwargs = dict((x, {'required': False}) for x in optional_fields)
+
+    class OutputCollaborationRequestDetailSerializer(serializers.ModelSerializer):
+        idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
+
+        class Meta:
+            model = CollaborationRequest
+            fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
+
+    @extend_schema(request=InputUpdateCollaborationRequestSerializer,
+                   responses=OutputCollaborationRequestDetailSerializer,
+                   tags=['Collaboration Request'])
+    def put(self, request, collaboration_request_uuid):
+        serializer = self.InputUpdateCollaborationRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request = get_collaboration_request_by_uuid(uuid=collaboration_request_uuid, user=request.user)
+        if not request:
+            return Response("No collaboration request found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        updated_request = update_collaboration_request(collaboration_request=request, data=serializer.validated_data)
+        output_serializer = self.OutputCollaborationRequestDetailSerializer(instance=updated_request)
+        return Response(data=output_serializer.data)
+
+    @extend_schema(tags=['Collaboration Request'])
+    def delete(self, request, collaboration_request_uuid):
+
+        request = get_collaboration_request_by_uuid(uuid=collaboration_request_uuid, user=request.user)
+        if not request:
+            return Response("No collaboration request with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        request.delete()
+        return Response(status=status.HTTP_200_OK)
+

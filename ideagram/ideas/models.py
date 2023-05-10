@@ -76,3 +76,11 @@ class IdeaComment(models.Model):
     comment = models.CharField(max_length=1000)
 
 
+class CollaborationRequest(models.Model):
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    skills = models.CharField(max_length=200)
+    age = models.PositiveIntegerField()
+    education = models.CharField(max_length=200)
+    description = models.TextField()
+    salary = models.PositiveIntegerField()

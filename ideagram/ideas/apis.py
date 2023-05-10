@@ -341,7 +341,7 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
         idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
 
         class Meta:
-            model = FinancialStep
+            model = CollaborationRequest
             fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
 
     @extend_schema(responses=OutputCollaborationRequestSerializer, tags=['Collaboration Request'])

@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db import IntegrityError
 
 from ideagram.common.utils import update_model_instance
-from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep
+from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep, CollaborationRequest
 from ideagram.profiles.models import Profile
 
 
@@ -45,7 +45,17 @@ def create_financial_step(*, idea: Idea, financial_data: dict) -> FinancialStep 
 
     return step
 
+
 @transaction.atomic
 def update_financial_step(*, financial_step: FinancialStep, data: dict) -> FinancialStep:
     updated_step = update_model_instance(instance=financial_step, data=data)
     return updated_step
+
+
+def create_collaboration_request(*, idea: Idea, data: dict) -> CollaborationRequest:
+    return CollaborationRequest.objects.create(idea=idea, **data)
+
+
+def update_collaboration_request(*, collaboration_request: CollaborationRequest, data: dict) -> CollaborationRequest:
+    updated_request = update_model_instance(instance=collaboration_request, data=data)
+    return updated_request

@@ -1,7 +1,7 @@
 from django.db.models import QuerySet
 
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest
 
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep
 from ideagram.users.models import BaseUser
 
 
@@ -23,7 +23,6 @@ def get_idea_by_uuid(*, uuid: str, user: BaseUser = None) -> Idea | None:
 
 
 def get_idea_evolutionary_steps(*, idea: Idea) -> QuerySet(EvolutionStep):
-
     steps = EvolutionStep.objects.filter(idea=idea)
 
     return steps
@@ -42,7 +41,6 @@ def get_evolutionary_step_by_uuid(*, uuid: str, user: BaseUser = None) -> Evolut
 
 
 def get_idea_financial_steps(*, idea: Idea) -> QuerySet(FinancialStep):
-
     steps = FinancialStep.objects.filter(idea=idea)
     return steps
 
@@ -55,5 +53,21 @@ def get_financial_step_by_uuid(*, uuid: str, user: BaseUser = None) -> Financial
 
     if step.exists():
         return step.first()
+    else:
+        return None
+
+
+def get_idea_collaboration_request(*, idea: Idea) -> QuerySet(CollaborationRequest):
+    return CollaborationRequest.objects.filter(idea=idea)
+
+
+def get_collaboration_request_by_uuid(*, uuid: str, user: BaseUser = None) -> CollaborationRequest | None:
+    if user:
+        request = CollaborationRequest.objects.filter(uuid=uuid, idea__profile__user=user)
+    else:
+        request = CollaborationRequest.objects.filter(uuid=uuid)
+
+    if request.exists():
+        return request.first()
     else:
         return None

@@ -9,8 +9,8 @@ from .validators import number_validator, special_char_exist_validator, letter_v
 from .models import Profile, ProfileLinks
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from drf_spectacular.utils import extend_schema
-from ideagram.profiles.services import register, update_user_profile
-from ideagram.api.mixins import ApiAuthMixin
+from ideagram.profiles.services import register, update_user_profile, follow_profile
+from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from .selectors import get_user_profile, get_profile_social_media, get_profile_using_username
 
 from ideagram.common.models import Address
@@ -167,3 +167,13 @@ class UserProfileSocialMediaApi(ApiAuthMixin, APIView):
         serializer = self.OutputSocialMediaSerializer(instance=social_media, many=True)
         return Response(data=serializer.data)
 
+
+class FollowProfileApi(ActiveProfileMixin, APIView):
+
+    @extend_schema(tags=['Follow'])
+    def post(self, request, following_username):
+        try:
+            follow_profile(user=request.user, following_username=following_username)
+            return Response(status=status.HTTP_201_CREATED)
+        except Profile.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)

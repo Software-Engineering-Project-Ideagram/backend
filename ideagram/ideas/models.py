@@ -80,6 +80,12 @@ class IdeaComment(models.Model):
 
 
 
+class Following(models.Model):
+    date = models.DateField(auto_now_add=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_follower')
+    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_following')
+
+
 class CollaborationRequest(models.Model):
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
@@ -96,3 +102,4 @@ class IdeaAttachmentFile(models.Model):
     idea = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
     file = models.FileField(upload_to=idea_upload_attachment_path)
     created_at = models.DateTimeField(default=timezone.now)
+

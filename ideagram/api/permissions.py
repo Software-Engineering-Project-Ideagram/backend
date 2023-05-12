@@ -18,3 +18,20 @@ class IsProfileActive(BasePermission):
             return True
         else:
             return False
+
+
+class IsProfileComplete(BasePermission):
+    """
+    Allows access only to active profile.
+    """
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated and request.user.is_user_active):
+            return False
+
+        profile = Profile.objects.filter(user=request.user)
+
+        if profile.exists() and profile.first().is_profile_active and profile.is_profile_complete:
+            return True
+        else:
+            return False

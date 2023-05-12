@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
-from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
+from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin, ProfileCompletenessMixin
 from ideagram.common.serializers import UUIDRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
@@ -36,7 +36,7 @@ class ClassificationAPI(APIView):
         return Response(data=serializer.data)
 
 
-class IdeaCreateAPI(ActiveProfileMixin, APIView):
+class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
     class InputIdeaCreateSerializer(serializers.ModelSerializer):
         classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
 

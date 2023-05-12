@@ -46,6 +46,12 @@ class Profile(BaseModel, models.Model):
     def is_profile_active(self):
         return self.is_active and not self.is_banned
 
+    @property
+    def is_profile_complete(self):
+        return bool(self.first_name.strip()) and bool(self.last_name.strip()) and bool(self.address.state.strip()) and \
+            bool(self.address.city.strip()) and bool(self.birth_date) and \
+            ProfileLinks.objects.filter(profile=self).count() > 3
+
     def __str__(self):
         return f"{self.user} >> {self.username}"
 

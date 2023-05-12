@@ -5,8 +5,8 @@ from rest_framework.views import APIView
 
 from ideagram.api.mixins import ApiAuthMixin
 from ideagram.profiles.selectors import get_user_profile
-from ideagram.reports.models import ProfileReport
-from ideagram.reports.services import create_profile_report
+from ideagram.reports.models import ProfileReport,IdeaReport
+from ideagram.reports.services import create_profile_report, create_idea_report
 
 
 class ProfileReportAPI(ApiAuthMixin, APIView):
@@ -24,6 +24,26 @@ class ProfileReportAPI(ApiAuthMixin, APIView):
         reporter_profile = get_user_profile(user=request.user)
         try:
             create_profile_report(reporter=reporter_profile, data=profile_report.validated_data)
+        except ValueError as error:
+            return Response(str(error), status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED)
+
+
+class IdeaReportAPI(ApiAuthMixin, APIView):
+    class InputIdeaReportSerializer(serializers.ModelSerializer):
+        idea = serializers.CharField(max_length=40)
+
+        class Meta:
+            model = IdeaReport
+            fields = ["idea","report_reasons","description"]
+
+    @extend_schema(request=InputIdeaReportSerializer, tags=["Reports"])
+    def post(self, request):
+        idea_report = self.InputIdeaReportSerializer(data=request.data)
+        idea_report.is_valid(raise_exception=True)
+        reporter_profile = get_user_profile(user=request.user)
+        try:
+            create_idea_report(reporter=reporter_profile, data=idea_report.validated_data)
         except ValueError as error:
             return Response(str(error), status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_201_CREATED)

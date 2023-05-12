@@ -1,3 +1,5 @@
+import time
+
 from django.conf import settings
 from django.db.models import Model
 from django.shortcuts import get_object_or_404
@@ -68,18 +70,27 @@ def profile_upload_image_path(instance, filename):
     ext = filename.split('.')[-1]
     return os.path.join(
         "profile_pics",
-        str(instance.id),
-        f'{str(instance.username)}_{round(timezone.time() * 1000)}.{ext}'
+        str(instance.username),
+        f'{str(instance.username)}_{int(round(time.time() * 1000))}.{ext}'
     )
 
 
 def idea_upload_image_path(instance, filename):
-    """Save idea images in PROJECT_ROOT/media/idea_pics/INSTANCE_ID directory"""
+    """Save idea images in PROJECT_ROOT/media/idea_pics/ directory"""
     ext = filename.split('.')[-1]
     return os.path.join(
         "idea_pics",
-        str(instance.id),
-        f'{str(instance.username)}_{round(timezone.time() * 1000)}.{ext}'
+        f'{str(instance.uuid)}_{int(round(time.time() * 1000))}.{ext}'
+    )
+
+
+def idea_upload_attachment_path(instance, filename):
+    """Save idea attachments in PROJECT_ROOT/media/idea_attachments/INSTANCE_ID directory"""
+    ext = filename.split('.')[-1]
+    return os.path.join(
+        "idea_attachments",
+        str(instance.idea.uuid),
+        f'{str(instance.uuid)}_{int(round(time.time() * 1000))}.{ext}'
     )
 
 

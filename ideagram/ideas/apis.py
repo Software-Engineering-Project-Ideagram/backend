@@ -525,4 +525,15 @@ class DonateIdeaApi(APIView):
             else:
                 return None
 
+    @extend_schema(request=DonationSerializer,
+                   tags=['Idea Donation'])
+    def post(self, request):
+        serializer = self.DonationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = serializer.save()
+        if result:
+            return Response(status=status.HTTP_201_CREATED)
+        else:
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
 

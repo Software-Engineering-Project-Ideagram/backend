@@ -1,7 +1,11 @@
 from django.db.models import QuerySet
 
+
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, 
+
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile
+    IdeaAttachmentFile , IdeaLikes
+
 
 from ideagram.users.models import BaseUser
 
@@ -59,6 +63,14 @@ def get_financial_step_by_uuid(*, uuid: str, user: BaseUser = None) -> Financial
 
 
 
+def get_idea_likes(*, idea_uuid: str, user: BaseUser):
+    entries = IdeaLikes.objects.filter(profile_id=user.id, idea_id=idea_uuid)
+    if entries.exists():
+        return entries
+    else:
+        return None
+
+
 def get_ideas_comment(*, idea: Idea) -> QuerySet(IdeaComment):
     comments = IdeaComment.objects.filter(idea=idea)
     return comments
@@ -94,3 +106,4 @@ def get_attachment_by_uuid(*, uuid: str, user: BaseUser = None) -> IdeaAttachmen
         return file.first()
     else:
         return None
+

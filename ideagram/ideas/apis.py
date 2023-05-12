@@ -6,17 +6,21 @@ from rest_framework.views import APIView
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from ideagram.common.serializers import UUIDRelatedField
-
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment, \
+from ideagram.common.utils import inline_serializer, inline_model_serializer
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
     IdeaAttachmentFile
+
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
-    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_collaboration_request, \
-    get_collaboration_request_by_uuid, get_ideas_comment, get_idea_attachments, get_attachment_by_uuid
+    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, get_ideas_comment, \
+get_idea_attachments, get_attachment_by_uuid
+
+
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
+    create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, update_collaboration_request, \
     create_comment_for_idea, add_attachment_file
 
 from ideagram.profiles.selectors import get_user_profile
+
 
 
 class ClassificationAPI(APIView):
@@ -299,6 +303,36 @@ class IdeaFinancialDetailApi(ActiveProfileMixin, APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+
+class IdeaLikeApi(APIView):
+
+    class UserLikeSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = IdeaLikes
+            fields = ['profile_id']
+
+    @extend_schema(responses=UserLikeSerializer(many=True), tags=['Idea Like'])
+    def get(self, request, idea_uuid):
+        try:
+            queryset = get_idea_likes(idea_uuid=idea_uuid, user=request.user)
+            serializer = self.UserLikeSerializer(queryset, many=True)
+            return Response(serializer.data)
+        except Idea.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @extend_schema(tags=['Idea Like'])
+    def post(self, request, idea_uuid):
+        temp = like_idea(idea_uuid=idea_uuid, user_id=request.user.id)
+        if temp is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_201_CREATED)
+
+    @extend_schema(tags=['Idea Like'])
+    def delete(self, request, idea_uuid):
+        unlike_idea(idea_uuid=idea_uuid, user=request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+      
 class IdeaCommentApi(ActiveProfileMixin, APIView):
     class InputIdeaCommentSerializer(serializers.ModelSerializer):
         class Meta:
@@ -463,4 +497,5 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
         attachment.delete()
         return Response(status=status.HTTP_200_OK)
+
 

@@ -1,6 +1,7 @@
 from django.db.models import QuerySet
 
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
+    IdeaAttachmentFile
 
 from ideagram.users.models import BaseUser
 
@@ -75,5 +76,21 @@ def get_collaboration_request_by_uuid(*, uuid: str, user: BaseUser = None) -> Co
 
     if request.exists():
         return request.first()
+    else:
+        return None
+
+
+def get_idea_attachments(*, idea: Idea) -> QuerySet(IdeaAttachmentFile):
+    return IdeaAttachmentFile.objects.filter(idea=idea)
+
+
+def get_attachment_by_uuid(*, uuid: str, user: BaseUser = None) -> IdeaAttachmentFile | None:
+    if user:
+        file = IdeaAttachmentFile.objects.filter(uuid=uuid, idea__profile__user=user)
+    else:
+        file = IdeaAttachmentFile.objects.filter(uuid=uuid)
+
+    if file.exists():
+        return file.first()
     else:
         return None

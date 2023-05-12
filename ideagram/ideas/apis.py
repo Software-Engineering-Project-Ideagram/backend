@@ -7,12 +7,14 @@ from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STE
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from ideagram.common.serializers import UUIDRelatedField
 
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment, \
+    IdeaAttachmentFile
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_collaboration_request, \
-    get_collaboration_request_by_uuid, get_ideas_comment
+    get_collaboration_request_by_uuid, get_ideas_comment, get_idea_attachments, get_attachment_by_uuid
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, create_comment_for_idea
+    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
+    create_comment_for_idea, add_attachment_file
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -409,5 +411,56 @@ class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
             return Response("No collaboration request with this uuid!", status=status.HTTP_404_NOT_FOUND)
 
         request.delete()
+        return Response(status=status.HTTP_200_OK)
+
+
+class IdeaAttachmentApi(ActiveProfileMixin, APIView):
+    class InputAttachmentSerializer(serializers.Serializer):
+        file = serializers.FileField()
+
+    class OutputAttachmentSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = IdeaAttachmentFile
+            fields = ['uuid', 'file', 'created_at']
+
+
+    @extend_schema(responses=OutputAttachmentSerializer(many=True), tags=["Attachments"])
+    def get(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        attachments = get_idea_attachments(idea=idea)
+        serializer = self.OutputAttachmentSerializer(instance=attachments, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+    @extend_schema(request=InputAttachmentSerializer, responses=OutputAttachmentSerializer, tags=["Attachments"])
+    def post(self, request, idea_uuid):
+        serializer = self.InputAttachmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        idea = get_idea_by_uuid(uuid=idea_uuid, user=request.user)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        attachment = add_attachment_file(idea=idea, data=serializer.validated_data)
+        if not attachment:
+            return Response("Maximum number of attachment reached!", status=status.HTTP_403_FORBIDDEN)
+
+        output_serializer = self.OutputAttachmentSerializer(instance=attachment)
+        return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
+
+    @extend_schema(tags=["Attachments"])
+    def delete(self, request, attachment_uuid):
+        attachment = get_attachment_by_uuid(uuid=attachment_uuid, user=request.user)
+        if not request:
+            return Response("No attachment found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        attachment.delete()
         return Response(status=status.HTTP_200_OK)
 

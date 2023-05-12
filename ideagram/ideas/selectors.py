@@ -1,11 +1,7 @@
 from django.db.models import QuerySet
 
-
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, 
-
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile , IdeaLikes
-
+    IdeaAttachmentFile, IdeaLikes
 
 from ideagram.users.models import BaseUser
 

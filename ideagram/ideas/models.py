@@ -38,7 +38,6 @@ class Idea(BaseModel):
     show_comments = models.BooleanField(default=True)
 
 
-
 class EvolutionStep(models.Model):
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
@@ -49,7 +48,6 @@ class EvolutionStep(models.Model):
 
     class Meta:
         unique_together = ('idea', 'priority')
-
 
 
 class FinancialStep(models.Model):
@@ -67,6 +65,7 @@ class FinancialStep(models.Model):
     class Meta:
         unique_together = ('idea', 'priority')
 
+
 class IdeaComment(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     date = models.DateTimeField(auto_now_add=True)
@@ -75,3 +74,6 @@ class IdeaComment(models.Model):
     comment = models.CharField(max_length=1000)
 
 
+class Organization(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    name = models.CharField(unique=True, max_length=200)

@@ -114,6 +114,7 @@ class IdeaAttachmentFile(models.Model):
     file = models.FileField(upload_to=idea_upload_attachment_path)
     created_at = models.DateTimeField(default=timezone.now)
 
+
 class Donation(models.Model):
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)

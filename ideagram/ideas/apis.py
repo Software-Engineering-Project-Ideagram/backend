@@ -2,17 +2,19 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models.aggregates import Sum
 
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from ideagram.common.serializers import UUIDRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
-    IdeaAttachmentFile
+    IdeaAttachmentFile, Donation
+from ideagram.profiles.models import Profile
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, get_ideas_comment, \
-get_idea_attachments, get_attachment_by_uuid
+get_idea_attachments, get_attachment_by_uuid, get_collaboration_request_by_uuid, get_idea_collaboration_request
 
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
@@ -497,5 +499,30 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
         attachment.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class DonateIdeaApi(APIView):
+
+    class DonationSerializer(serializers.ModelSerializer):
+        idea = serializers.PrimaryKeyRelatedField(queryset=Idea.objects.all())
+        profile = serializers.PrimaryKeyRelatedField(queryset=Profile.objects.all())
+
+        class Meta:
+            model = Donation
+            fields = ['idea', 'profile', 'amount', 'date']
+
+        def create(self, validated_data):
+            new_donation = validated_data['amount']
+            idea = Idea.objects.get(uuid=validated_data['idea'])
+
+            current_donation = Donation.objects.filter(idea=idea).aggregate(Sum('amount'))
+            max_donation = idea.max_donation
+
+            if current_donation + new_donation < max_donation:
+                donation = Donation(**validated_data)
+                donation.save()
+                return donation
+            else:
+                return None
 
 

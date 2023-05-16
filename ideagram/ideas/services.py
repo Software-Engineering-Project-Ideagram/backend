@@ -5,7 +5,7 @@ from config.settings.idea import MAX_FILE_ATTACHMENT_COUNT
 from ideagram.common.utils import update_model_instance
 
 from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile, IdeaLikes
+    IdeaAttachmentFile, IdeaLikes, Donation
 
 from ideagram.profiles.models import Profile
 
@@ -102,3 +102,6 @@ def add_attachment_file(*, idea: Idea, data: dict) -> IdeaAttachmentFile | None:
     return attachment
 
 
+@transaction.atomic
+def add_donation(*, profile: Profile, idea: Idea, amount: int):
+    Donation.objects.create(profile=profile, idea=idea, amount=amount)

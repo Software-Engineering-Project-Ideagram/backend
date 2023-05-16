@@ -15,12 +15,13 @@ from ideagram.users.models import BaseUser
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, get_ideas_comment, \
-get_idea_attachments, get_attachment_by_uuid, get_collaboration_request_by_uuid, get_idea_collaboration_request
+    get_idea_attachments, get_attachment_by_uuid, get_collaboration_request_by_uuid, get_idea_collaboration_request, \
+    get_sum_donation, get_idea_by_id
 
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
     create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, update_collaboration_request, \
-    create_comment_for_idea, add_attachment_file
+    create_comment_for_idea, add_attachment_file, add_donation
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -516,14 +517,14 @@ class DonateIdeaApi(ActiveProfileMixin, APIView):
 
         serializer = self.DonationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        profile = Profile.objects.get(user=request.user)
 
-        idea = Idea.objects.get(id=serializer.validated_data['idea'])
+        profile = Profile.objects.get(user=request.user)
+        idea = get_idea_by_id(idea_id=serializer.validated_data['idea'])
         amount = serializer.validated_data['amount']
 
-        current_donation = Donation.objects.filter(idea=idea).aggregate(Sum('amount'))['amount__sum']
+        current_donation = get_sum_donation(idea=idea)
         if current_donation + amount < idea.max_donation:
-            Donation.objects.create(profile=profile, idea=idea, amount=amount)
+            add_donation(profile=profile, idea=idea, amount=amount)
             return Response(status=status.HTTP_201_CREATED)
         else:
             return Response("amount of Donation is greater than limitation", status=status.HTTP_400_BAD_REQUEST)

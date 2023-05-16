@@ -519,7 +519,7 @@ class DonateIdeaApi(ActiveProfileMixin, APIView):
         serializer.is_valid(raise_exception=True)
 
         profile = Profile.objects.get(user=request.user)
-        idea = get_idea_by_id(idea_id=serializer.validated_data['idea'])
+        idea = get_idea_by_id(idea_id=serializer.validated_data['idea'].id)
         amount = serializer.validated_data['amount']
 
         current_donation = get_sum_donation(idea=idea)

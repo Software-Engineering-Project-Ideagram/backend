@@ -1,7 +1,7 @@
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Sum
 
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile, IdeaLikes
+    IdeaAttachmentFile, IdeaLikes, Donation
 
 from ideagram.users.models import BaseUser
 
@@ -102,4 +102,8 @@ def get_attachment_by_uuid(*, uuid: str, user: BaseUser = None) -> IdeaAttachmen
         return file.first()
     else:
         return None
+
+
+def get_sum_donation(*, idea: Idea):
+    return Donation.objects.filter(idea=idea).aggregate(Sum('amount'))['amount__sum']
 

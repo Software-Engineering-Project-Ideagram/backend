@@ -107,3 +107,7 @@ def get_attachment_by_uuid(*, uuid: str, user: BaseUser = None) -> IdeaAttachmen
 def get_sum_donation(*, idea: Idea):
     return Donation.objects.filter(idea=idea).aggregate(Sum('amount'))['amount__sum']
 
+
+def get_idea_by_id(*, idea_id: int):
+    return Idea.objects.get(id=idea_id)
+

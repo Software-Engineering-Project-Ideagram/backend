@@ -11,6 +11,7 @@ from ideagram.common.utils import inline_serializer, inline_model_serializer
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
     IdeaAttachmentFile, Donation
 from ideagram.profiles.models import Profile
+from ideagram.users.models import BaseUser
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, get_ideas_comment, \
@@ -488,7 +489,6 @@ class IdeaAttachmentApi(ActiveProfileMixin, APIView):
         return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
 
 
-
 class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
     @extend_schema(tags=["Attachments"])
@@ -501,39 +501,32 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class DonateIdeaApi(APIView):
+class DonateIdeaApi(ActiveProfileMixin, APIView):
 
     class DonationSerializer(serializers.ModelSerializer):
         idea = serializers.PrimaryKeyRelatedField(queryset=Idea.objects.all())
-        profile = serializers.PrimaryKeyRelatedField(queryset=Profile.objects.all())
 
         class Meta:
             model = Donation
-            fields = ['idea', 'profile', 'amount', 'date']
-
-        def create(self, validated_data):
-            new_donation = validated_data['amount']
-            idea = Idea.objects.get(uuid=validated_data['idea'])
-
-            current_donation = Donation.objects.filter(idea=idea).aggregate(Sum('amount'))
-            max_donation = idea.max_donation
-
-            if current_donation + new_donation < max_donation:
-                donation = Donation(**validated_data)
-                donation.save()
-                return donation
-            else:
-                return None
+            fields = ['idea', 'amount', 'date']
 
     @extend_schema(request=DonationSerializer,
                    tags=['Idea Donation'])
     def post(self, request):
+
         serializer = self.DonationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = serializer.save()
-        if result:
+        profile = Profile.objects.get(user=request.user)
+
+        idea = Idea.objects.get(id=serializer.validated_data['idea'])
+        amount = serializer.validated_data['amount']
+
+        current_donation = Donation.objects.filter(idea=idea).aggregate(Sum('amount'))['amount__sum']
+        if current_donation + amount < idea.max_donation:
+            Donation.objects.create(profile=profile, idea=idea, amount=amount)
             return Response(status=status.HTTP_201_CREATED)
         else:
-            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response("amount of Donation is greater than limitation", status=status.HTTP_400_BAD_REQUEST)
+
 
 

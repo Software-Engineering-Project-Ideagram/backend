@@ -1,17 +1,23 @@
 version: "3.9"
 
+networks:
+  default:
+    name: ideagram
+
 services:
   db:
     image: postgres:15.2
-    ports:
-      - 5432:5432
+
     environment:
       - POSTGRES_DB=ideagram
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=sofeng-ideagram@1402
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
 
   rabbitmq:
-    image: "rabbitmq:3.11.11-alpine"
+    image: "rabbitmq:alpine"
 
     healthcheck:
       test: rabbitmq-diagnostics -q ping
@@ -19,49 +25,51 @@ services:
       timeout: 30s
       retries: 3
 
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis-data:/data
+
   django:
     build:
       context: .
-      dockerfile: docker/local.Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
+      dockerfile: ./docker/production.Dockerfile
+    command: bash ./docker/web_entrypoint.sh
     environment:
-      - DATABASE_URL=psql://postgres:postgres@db:5432/ideagram
+      - DATABASE_URL=psql://admin:sofeng-ideagram@1402@db:5432/ideagram
       - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - SECRET_KEY=nplxe-n-lnb!)(9y1q5cyofl)f$8(w^m6-p!mb7k%a%(y51^ne
+      - ALLOWED_HOSTS=127.0.0.1,localhost,api.iwantnet.space
+      - SESSION_COOKIE_SECURE=0   #change this on main production
+      - DJANGO_DEBUG=1   #change this on main production
+      - CORS_ORIGIN_WHITELIST=http://127.0.0.1:3000,http://localhost:3000,http://api.iwantnet.space:3000,https://api.iwantnet.space:3000
+      - CSRF_TRUSTED_ORIGINS=http://www.127.0.0.1:8001,http://127.0.0.1:8001,http://localhost:8001,http://www.localhost:8001,http://api.iwantnet.space:8001,http://www.api.iwantnet.space:8001
     volumes:
-      - .:/app
+      - static_volume:/app/backend/staticfiles
+      - media_volume:/app/backend/media
+    depends_on:
+      - db
+      - rabbitmq
+    restart: on-failure
+
+  nginx:
+    image: nginx:latest
     ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - rabbitmq
-    restart: on-failure
+      - 8001:80
 
-  celery:
-    build:
-      context: .
-      dockerfile: docker/local.Dockerfile
-    command: celery -A ideagram.tasks worker -l info --without-gossip --without-mingle --without-heartbeat
-    environment:
-      - DATABASE_URL=psql://postgres:postgres@db:5432/ideagram
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
     volumes:
-      - .:/app
-    depends_on:
-      - db
-      - rabbitmq
-    restart: on-failure
+      - static_volume:/var/www/ideagram/static
+      - type: bind
+        source: ./config/nginx
+        target: /etc/nginx/conf.d
 
-  beats:
-    build:
-      context: .
-      dockerfile: docker/local.Dockerfile
-    command: celery -A ideagram.tasks beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    environment:
-      - DATABASE_URL=psql://postgres:postgres@db:5432/ideagram
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
-    volumes:
-      - .:/app
     depends_on:
-      - db
-      - rabbitmq
-    restart: on-failure
+      - django
+
+
+volumes:
+  redis-data:
+  postgres-data:
+  static_volume:
+  media_volume:

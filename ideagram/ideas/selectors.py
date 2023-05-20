@@ -103,3 +103,21 @@ def get_attachment_by_uuid(*, uuid: str, user: BaseUser = None) -> IdeaAttachmen
     else:
         return None
 
+
+
+def filter_ideas(
+        classification_uuids: list = None, usernames: list=None, emails: list=None, sort_by: str='created_at'
+        ) -> QuerySet(Idea):
+
+    search_params = {"profile__is_public": True}
+
+    if classification_uuids:
+        search_params["classification__uuid__in"] = classification_uuids
+
+    if usernames:
+        search_params["profile__username__in"] = usernames
+
+    if usernames:
+        search_params["profile__user__email__in"] = emails
+
+    return Idea.objects.filter(**search_params).order_by(f"-{sort_by}")

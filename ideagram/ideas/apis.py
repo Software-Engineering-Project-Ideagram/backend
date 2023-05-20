@@ -11,9 +11,10 @@ from ideagram.ideas.models import Classification, Idea, EvolutionStep, Financial
     IdeaAttachmentFile
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
-    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, get_ideas_comment, \
-get_idea_attachments, get_attachment_by_uuid
-
+    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, \
+    get_ideas_comment, \
+    get_idea_attachments, get_attachment_by_uuid, filter_ideas, get_collaboration_request_by_uuid, \
+    get_idea_collaboration_request
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
     create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, update_collaboration_request, \
@@ -497,5 +498,66 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
         attachment.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class IdeaFilterApi(APIView):
+    class InputIdeaFilterSerializer(serializers.Serializer):
+        classification_uuids = UUIDRelatedField(
+            queryset=Classification.objects.all(),
+            uuid_field='uuid',
+            many=True,
+            required=False
+        )
+        usernames = serializers.ListField(child=serializers.CharField(max_length=128), required=False)
+        emails = serializers.ListField(child=serializers.EmailField(), required=False)
+        sort_by = serializers.ChoiceField(choices=[
+            ('view', 'views_count'), ('like', 'likes_count'), ('comment', 'comments_count'), ('date', 'created_at')
+        ], required=False)
+
+        def validate(self, attrs):
+            if attrs.get('usernames', None) and attrs.get('emails', None):
+                raise serializers.ValidationError(
+                    "Only one of 'emails' or 'usernames' fields can be used to apply filter"
+                )
+
+            return attrs
+
+
+    class OutputIdeaFilterSerializer(serializers.ModelSerializer):
+        views_count = serializers.SerializerMethodField()
+        likes_count = serializers.SerializerMethodField()
+        comments_count = serializers.SerializerMethodField()
+        class Meta:
+            model = Idea
+            fields = ['uuid', 'profile', 'title', 'abstract', 'image', 'views_count', 'likes_count', 'comments_count']
+
+        def get_views_count(self, idea):
+            if idea.show_views:
+                return idea.views_count
+            return None
+
+        def get_likes_count(self, idea):
+            if idea.show_likes:
+                return idea.likes_count
+            return None
+
+        def get_comments_count(self, idea):
+            if idea.show_comments:
+                return idea.comments_count
+            return None
+
+    @extend_schema(request=InputIdeaFilterSerializer, responses=OutputIdeaFilterSerializer(many=True), tags=['Filter'])
+    def post(self, request):
+        serializer = self.InputIdeaFilterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        ideas = filter_ideas(**serializer.validated_data)
+        if not ideas:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+        output_serializer = self.OutputIdeaFilterSerializer(instance=ideas, many=True)
+        return Response(data=output_serializer.data, status=status.HTTP_200_OK)
+
 
 

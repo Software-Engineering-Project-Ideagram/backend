@@ -7,7 +7,7 @@ from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STE
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from ideagram.common.serializers import UUIDRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, Organization
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
@@ -293,3 +293,15 @@ class IdeaFinancialDetail(ActiveProfileMixin, APIView):
 
         step.delete()
         return Response(status=status.HTTP_200_OK)
+
+class OrganizationListAPI(APIView):
+    class OutputOrganizationSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Organization
+            fields = ["uuid", "name"]
+
+    @extend_schema(responses=OutputOrganizationSerializer(many=True), tags=["Organization"])
+    def get(self, request):
+        organizations = Organization.objects.all()
+        serializer = self.OutputOrganizationSerializer(instance=organizations, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

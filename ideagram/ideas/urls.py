@@ -1,7 +1,7 @@
 from django.urls import path
 
 from ideagram.ideas.apis import ClassificationAPI, IdeaCreateAPI, IdeaDetailView, IdeaEvolutionStepApi, \
-    IdeaEvolutionDetail, IdeaFinancialStepApi, IdeaFinancialDetail
+    IdeaEvolutionDetail, IdeaFinancialStepApi, IdeaFinancialDetail, OrganizationListAPI
 
 urlpatterns = [
     path('classification/list', ClassificationAPI.as_view(), name="classification-list"),
@@ -11,4 +11,5 @@ urlpatterns = [
     path('evolution/detail/<str:evolution_uuid>', IdeaEvolutionDetail.as_view(), name='evolution-detail'),
     path('financial/<str:idea_uuid>', IdeaFinancialStepApi.as_view(), name='idea-financial'),
     path('financial/detail/<str:financial_uuid>', IdeaFinancialDetail.as_view(), name='financial-detail'),
+    path('organization', OrganizationListAPI.as_view(), name='organization-list'),
 ]

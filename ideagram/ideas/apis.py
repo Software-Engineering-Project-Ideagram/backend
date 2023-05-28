@@ -54,7 +54,7 @@ class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
             fields = ['uuid', 'classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
                       'show_likes', 'show_views', 'show_comments']
 
-    @extend_schema(request=InputIdeaCreateSerializer, tags=['Idea'])
+    @extend_schema(request=InputIdeaCreateSerializer, responses=OutputIdeaCreateSerializer, tags=['Idea'])
     def post(self, request):
         serializer = self.InputIdeaCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

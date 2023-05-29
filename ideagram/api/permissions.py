@@ -31,7 +31,7 @@ class IsProfileComplete(BasePermission):
 
         profile = Profile.objects.filter(user=request.user)
 
-        if profile.exists() and profile.first().is_profile_active and profile.is_profile_complete:
+        if profile.exists() and profile.first().is_profile_active and profile.first().is_profile_complete:
             return True
         else:
             return False

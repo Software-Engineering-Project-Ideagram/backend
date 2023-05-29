@@ -48,8 +48,8 @@ class Profile(BaseModel, models.Model):
 
     @property
     def is_profile_complete(self):
-        return bool(self.first_name.strip()) and bool(self.last_name.strip()) and bool(self.address.state.strip()) and \
-            bool(self.address.city.strip()) and bool(self.birth_date) and \
+        return bool(self.first_name) and bool(self.last_name) and bool(self.address.state) and \
+            bool(self.address.city) and bool(self.birth_date) and \
             ProfileLinks.objects.filter(profile=self).count() > 3
 
     def __str__(self):

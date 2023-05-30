@@ -30,7 +30,7 @@ class ClassificationAPI(APIView):
             model = Classification
             fields = ['uuid', 'title']
 
-    @extend_schema(responses=OutputClassificationSerializer, tags=['Classification'])
+    @extend_schema(responses=OutputClassificationSerializer(many=True), tags=['Classification'])
     def get(self, request):
         classifications = get_all_classifications()
         serializer = self.OutputClassificationSerializer(instance=classifications, many=True)
@@ -137,7 +137,7 @@ class IdeaEvolutionStepApi(ActiveProfileMixin, APIView):
             model = EvolutionStep
             fields = ['uuid', 'idea', 'title', 'finish_date', 'description', 'priority']
 
-    @extend_schema(responses=OutputCreateEvolutionStepSerializer, tags=['Evolution Step'])
+    @extend_schema(responses=OutputCreateEvolutionStepSerializer(many=True), tags=['Evolution Step'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -229,7 +229,7 @@ class IdeaFinancialStepApi(ActiveProfileMixin, APIView):
             model = FinancialStep
             fields = ['uuid', 'idea', 'title', 'cost', 'description', 'priority', 'unit']
 
-    @extend_schema(responses=OutputCreateFinancialStepSerializer, tags=['Financial Step'])
+    @extend_schema(responses=OutputCreateFinancialStepSerializer(many=True), tags=['Financial Step'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -381,7 +381,7 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
             model = CollaborationRequest
             fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
 
-    @extend_schema(responses=OutputCollaborationRequestSerializer, tags=['Collaboration Request'])
+    @extend_schema(responses=OutputCollaborationRequestSerializer(many=True), tags=['Collaboration Request'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -398,7 +398,7 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
         if not idea:
             return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.InputIdeaCollaborationRequestSerializer(data=request.data, many=True)
+        serializer = self.InputIdeaCollaborationRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         new_collaboration_request = create_collaboration_request(idea=idea, data=serializer.validated_data)

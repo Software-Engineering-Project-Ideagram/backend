@@ -91,12 +91,6 @@ class IdeaLikes(models.Model):
 
 
 
-class Following(models.Model):
-    date = models.DateField(auto_now_add=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_follower')
-    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_following')
-
-
 class CollaborationRequest(models.Model):
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)

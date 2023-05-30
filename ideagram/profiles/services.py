@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model, authenticate
 from django.db import transaction
-from .models import Profile, Following
+from psycopg2 import IntegrityError
+
+from .models import Profile, Following, ProfileLinks
 from ..common.utils import update_model_instance
 from ..users.Exceptions import InvalidPassword
 
@@ -41,3 +43,14 @@ def update_user_profile(*, profile: Profile, data: dict) -> Profile:
 def follow_profile(*, user, following_username):
     following = Profile.objects.filter(username=following_username)
     Following.objects.create(profile=user, profile_following=following)
+
+
+
+@transaction.atomic
+def add_social_media_to_profile(*, profile: Profile, data) -> ProfileLinks | None:
+    try:
+        link = ProfileLinks.objects.create(profile=profile, **data)
+    except IntegrityError:
+        return None
+
+    return link

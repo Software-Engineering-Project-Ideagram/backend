@@ -14,7 +14,7 @@ def get_user_profile(*, user: BASE_USER) -> Profile:
 def get_profile_social_media(*, profile: Profile) -> QuerySet(ProfileLinks):
     """Returns social media links of given profile"""
 
-    return ProfileLinks.objects.filter(profile=profile).order_by('priority')
+    return ProfileLinks.objects.filter(profile=profile)
 
 
 def get_profile_using_username(*, username: str) -> Profile | None:

@@ -1,8 +1,9 @@
 import uuid as uuid
 from django.db import models
+from django.utils import timezone
 
 from ideagram.common.models import BaseModel
-from ideagram.common.utils import idea_upload_image_path
+from ideagram.common.utils import idea_upload_image_path, idea_upload_attachment_path
 from ideagram.profiles.models import Profile
 
 
@@ -12,6 +13,7 @@ from ideagram.profiles.models import Profile
 class Classification(models.Model):
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     title = models.CharField(max_length=50, unique=True)
+
 
 
 class Idea(BaseModel):
@@ -66,6 +68,8 @@ class FinancialStep(models.Model):
         unique_together = ('idea', 'priority')
 
 
+
+        
 class IdeaComment(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     date = models.DateTimeField(auto_now_add=True)
@@ -77,3 +81,40 @@ class IdeaComment(models.Model):
 class Organization(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     name = models.CharField(unique=True, max_length=200)
+
+    
+class IdeaLikes(models.Model):
+
+    date = models.DateField(auto_now_add=True)
+    profile_id = models.ForeignKey(to=Profile, on_delete=models.CASCADE)
+    idea_id = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('profile_id', 'idea_id')
+
+
+
+class Following(models.Model):
+    date = models.DateField(auto_now_add=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_follower')
+    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_following')
+
+
+class CollaborationRequest(models.Model):
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    skills = models.CharField(max_length=200)
+    age = models.PositiveIntegerField()
+    education = models.CharField(max_length=200)
+    description = models.TextField()
+    salary = models.PositiveIntegerField()
+
+
+
+class IdeaAttachmentFile(models.Model):
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    idea = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
+    file = models.FileField(upload_to=idea_upload_attachment_path)
+    created_at = models.DateTimeField(default=timezone.now)
+
+

@@ -21,3 +21,4 @@ class Address(models.Model):
 
 class ForbiddenWord(models.Model):
     word = models.CharField(unique=True, max_length=200)
+

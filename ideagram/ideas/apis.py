@@ -18,8 +18,9 @@ from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, 
     get_idea_collaboration_request
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, update_collaboration_request, \
-    create_comment_for_idea, add_attachment_file
+    create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, \
+    update_collaboration_request, \
+    create_comment_for_idea, add_attachment_file, is_forbidden_word_exists
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -46,6 +47,28 @@ class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
             model = Idea
             fields = ['classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
                       'show_likes', 'show_views', 'show_comments']
+
+
+        def validate_goal(self, goal):
+            if is_forbidden_word_exists(text=goal):
+                raise serializers.ValidationError("Goal contains some forbidden words")
+            return goal
+
+        def validate_abstract(self, abstract):
+            if is_forbidden_word_exists(text=abstract):
+                raise serializers.ValidationError("abstract contains some forbidden words")
+            return abstract
+
+        def validate_description(self, description):
+            if is_forbidden_word_exists(text=description):
+                raise serializers.ValidationError("description contains some forbidden words")
+            return description
+
+        def validate_title(self, title):
+            if is_forbidden_word_exists(text=title):
+                raise serializers.ValidationError("title contains some forbidden words")
+            return title
+
 
     class OutputIdeaCreateSerializer(serializers.ModelSerializer):
         classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)

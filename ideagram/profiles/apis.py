@@ -114,7 +114,7 @@ class UserProfileApi(ApiAuthMixin, APIView):
             model_fields=[
                 'country', 'state', 'city', 'address', 'zip_code'
             ]
-        )()
+        )(required=False)
 
         class Meta:
             model = Profile

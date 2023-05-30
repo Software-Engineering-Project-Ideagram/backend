@@ -3,6 +3,7 @@ from django.db import transaction
 from psycopg2 import IntegrityError
 
 from .models import Profile, Following, ProfileLinks
+from ..common.models import Address
 from ..common.utils import update_model_instance
 from ..users.Exceptions import InvalidPassword
 
@@ -34,6 +35,16 @@ def update_user_profile(*, profile: Profile, data: dict) -> Profile:
             user.save()
         else:
             raise InvalidPassword("Invalid password")
+
+    new_address = data.pop('address')
+
+    if new_address and profile.address is not None:
+        updated_address = update_model_instance(instance=profile.address, data=new_address)
+
+    elif new_address and profile.address is None:
+        address = Address.objects.create(**new_address)
+        profile.address = address
+        profile.save()
 
     updated_profile = update_model_instance(instance=profile, data=data)
     return updated_profile

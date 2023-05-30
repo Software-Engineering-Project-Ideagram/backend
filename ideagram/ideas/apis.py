@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin, ProfileCompletenessMixin
-from ideagram.common.serializers import UUIDRelatedField
+from ideagram.common.serializers import UUIDRelatedField, StringRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
 
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
@@ -41,8 +41,7 @@ class ClassificationAPI(APIView):
 
 class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
     class InputIdeaCreateSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
-
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
         class Meta:
             model = Idea
             fields = ['classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
@@ -71,7 +70,7 @@ class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
 
 
     class OutputIdeaCreateSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
 
         class Meta:
             model = Idea
@@ -90,7 +89,7 @@ class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
 
 class IdeaDetailView(ApiAuthMixin, APIView):
     class OutputDetailSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
 
         class Meta:
             model = Idea
@@ -98,9 +97,9 @@ class IdeaDetailView(ApiAuthMixin, APIView):
                       'show_likes', 'show_views', 'show_comments', 'views_count', 'likes_count', 'comments_count']
 
     class InputUpdateIdeaSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(
+        classification = StringRelatedField(
             queryset=Classification.objects.all(),
-            uuid_field='uuid',
+            string_field='title',
             many=True,
             required=False
         )
@@ -539,9 +538,9 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
 class IdeaFilterApi(APIView):
     class InputIdeaFilterSerializer(serializers.Serializer):
-        classification_uuids = UUIDRelatedField(
+        classification = StringRelatedField(
             queryset=Classification.objects.all(),
-            uuid_field='uuid',
+            string_field='title',
             many=True,
             required=False
         )

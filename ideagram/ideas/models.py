@@ -14,7 +14,8 @@ class Classification(models.Model):
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     title = models.CharField(max_length=50, unique=True)
 
-
+    def __str__(self):
+        return self.title
 
 class Idea(BaseModel):
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
@@ -38,6 +39,9 @@ class Idea(BaseModel):
     show_likes = models.BooleanField(default=True)
     show_views = models.BooleanField(default=True)
     show_comments = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
 
 
 class EvolutionStep(models.Model):

@@ -5,7 +5,7 @@ from rest_framework.authentication import BaseAuthentication
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from ideagram.api.permissions import IsProfileActive
+from ideagram.api.permissions import IsProfileActive, IsProfileComplete
 
 
 def get_auth_header(headers):
@@ -38,3 +38,7 @@ class ApiAuthMixin:
 
 class ActiveProfileMixin(ApiAuthMixin):
     permission_classes: PermissionClassesType = (IsProfileActive,)
+
+
+class ProfileCompletenessMixin(ApiAuthMixin):
+    permission_classes: PermissionClassesType = (IsProfileComplete,)

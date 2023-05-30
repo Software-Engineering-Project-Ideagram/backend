@@ -5,10 +5,11 @@ from rest_framework.views import APIView
 
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin, ProfileCompletenessMixin
-from ideagram.common.serializers import UUIDRelatedField
+from ideagram.common.serializers import UUIDRelatedField, StringRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
+
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
-    IdeaAttachmentFile
+    IdeaAttachmentFile, Organization
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, \
@@ -17,8 +18,9 @@ from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, 
     get_idea_collaboration_request
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, update_collaboration_request, \
-    create_comment_for_idea, add_attachment_file
+    create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, \
+    update_collaboration_request, \
+    create_comment_for_idea, add_attachment_file, is_forbidden_word_exists
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -30,7 +32,7 @@ class ClassificationAPI(APIView):
             model = Classification
             fields = ['uuid', 'title']
 
-    @extend_schema(responses=OutputClassificationSerializer, tags=['Classification'])
+    @extend_schema(responses=OutputClassificationSerializer(many=True), tags=['Classification'])
     def get(self, request):
         classifications = get_all_classifications()
         serializer = self.OutputClassificationSerializer(instance=classifications, many=True)
@@ -39,15 +41,36 @@ class ClassificationAPI(APIView):
 
 class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
     class InputIdeaCreateSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
-
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
         class Meta:
             model = Idea
             fields = ['classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
                       'show_likes', 'show_views', 'show_comments']
 
+
+        def validate_goal(self, goal):
+            if is_forbidden_word_exists(text=goal):
+                raise serializers.ValidationError("Goal contains some forbidden words")
+            return goal
+
+        def validate_abstract(self, abstract):
+            if is_forbidden_word_exists(text=abstract):
+                raise serializers.ValidationError("abstract contains some forbidden words")
+            return abstract
+
+        def validate_description(self, description):
+            if is_forbidden_word_exists(text=description):
+                raise serializers.ValidationError("description contains some forbidden words")
+            return description
+
+        def validate_title(self, title):
+            if is_forbidden_word_exists(text=title):
+                raise serializers.ValidationError("title contains some forbidden words")
+            return title
+
+
     class OutputIdeaCreateSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
 
         class Meta:
             model = Idea
@@ -66,7 +89,7 @@ class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
 
 class IdeaDetailView(ApiAuthMixin, APIView):
     class OutputDetailSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
 
         class Meta:
             model = Idea
@@ -74,9 +97,9 @@ class IdeaDetailView(ApiAuthMixin, APIView):
                       'show_likes', 'show_views', 'show_comments', 'views_count', 'likes_count', 'comments_count']
 
     class InputUpdateIdeaSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(
+        classification = StringRelatedField(
             queryset=Classification.objects.all(),
-            uuid_field='uuid',
+            string_field='title',
             many=True,
             required=False
         )
@@ -137,7 +160,7 @@ class IdeaEvolutionStepApi(ActiveProfileMixin, APIView):
             model = EvolutionStep
             fields = ['uuid', 'idea', 'title', 'finish_date', 'description', 'priority']
 
-    @extend_schema(responses=OutputCreateEvolutionStepSerializer, tags=['Evolution Step'])
+    @extend_schema(responses=OutputCreateEvolutionStepSerializer(many=True), tags=['Evolution Step'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -229,7 +252,7 @@ class IdeaFinancialStepApi(ActiveProfileMixin, APIView):
             model = FinancialStep
             fields = ['uuid', 'idea', 'title', 'cost', 'description', 'priority', 'unit']
 
-    @extend_schema(responses=OutputCreateFinancialStepSerializer, tags=['Financial Step'])
+    @extend_schema(responses=OutputCreateFinancialStepSerializer(many=True), tags=['Financial Step'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -302,6 +325,19 @@ class IdeaFinancialDetailApi(ActiveProfileMixin, APIView):
 
         step.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class OrganizationListAPI(APIView):
+    class OutputOrganizationSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Organization
+            fields = ["uuid", "name"]
+
+    @extend_schema(responses=OutputOrganizationSerializer(many=True), tags=["Organization"])
+    def get(self, request):
+        organizations = Organization.objects.all()
+        serializer = self.OutputOrganizationSerializer(instance=organizations, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -381,7 +417,7 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
             model = CollaborationRequest
             fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
 
-    @extend_schema(responses=OutputCollaborationRequestSerializer, tags=['Collaboration Request'])
+    @extend_schema(responses=OutputCollaborationRequestSerializer(many=True), tags=['Collaboration Request'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -398,7 +434,7 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
         if not idea:
             return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.InputIdeaCollaborationRequestSerializer(data=request.data, many=True)
+        serializer = self.InputIdeaCollaborationRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         new_collaboration_request = create_collaboration_request(idea=idea, data=serializer.validated_data)
@@ -502,9 +538,9 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
 class IdeaFilterApi(APIView):
     class InputIdeaFilterSerializer(serializers.Serializer):
-        classification_uuids = UUIDRelatedField(
+        classification = StringRelatedField(
             queryset=Classification.objects.all(),
-            uuid_field='uuid',
+            string_field='title',
             many=True,
             required=False
         )

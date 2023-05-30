@@ -9,7 +9,7 @@ from .validators import number_validator, special_char_exist_validator, letter_v
 from .models import Profile, ProfileLinks
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from drf_spectacular.utils import extend_schema
-from ideagram.profiles.services import register, update_user_profile, follow_profile
+from ideagram.profiles.services import register, update_user_profile, follow_profile, add_social_media_to_profile
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from .selectors import get_user_profile, get_profile_social_media, get_profile_using_username
 
@@ -39,10 +39,7 @@ class RegisterApi(APIView):
                 raise serializers.ValidationError("email Already Taken")
             return email
 
-
-
     class OutPutRegisterSerializer(serializers.ModelSerializer):
-
         token = serializers.SerializerMethodField("get_token")
 
         class Meta:
@@ -75,7 +72,6 @@ class RegisterApi(APIView):
 
 
 class UserProfileApi(ApiAuthMixin, APIView):
-
     class OutPutUserProfileSerializer(serializers.ModelSerializer):
         address = inline_model_serializer(
             serializer_name="user_profile_address_serializer",
@@ -111,10 +107,20 @@ class UserProfileApi(ApiAuthMixin, APIView):
             ],
             required=False
         )
+
+        address = inline_model_serializer(
+            serializer_name="user_profile_edit_address_serializer",
+            serializer_model=Address,
+            model_fields=[
+                'country', 'state', 'city', 'address', 'zip_code'
+            ]
+        )(required=False)
+
         class Meta:
             model = Profile
-            optional_fields = ['username', 'first_name', 'last_name', 'birth_date', 'gender', 'bio', 'address', 'profile_image',
-                      'is_public', 'old_password', 'new_password']
+            optional_fields = ['username', 'first_name', 'last_name', 'birth_date', 'gender', 'bio', 'address',
+                               'profile_image',
+                               'is_public', 'old_password', 'new_password']
             required_fields = []
             fields = [*optional_fields, *required_fields]
 
@@ -130,7 +136,7 @@ class UserProfileApi(ApiAuthMixin, APIView):
         def validate_username(self, username):
             profile = get_profile_using_username(username=username)
             if profile:
-               raise serializers.ValidationError("This username is already exists")
+                raise serializers.ValidationError("This username is already exists")
 
             return username
 
@@ -155,17 +161,54 @@ class UserProfileApi(ApiAuthMixin, APIView):
 
 
 class UserProfileSocialMediaApi(ApiAuthMixin, APIView):
+    class InputSocialMediaSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = ProfileLinks
+            fields = ['type', 'link']
+
     class OutputSocialMediaSerializer(serializers.ModelSerializer):
         class Meta:
             model = ProfileLinks
-            fields = ['uuid', 'type', 'link', 'priority']
+            fields = ['uuid', 'type', 'link']
 
-    @extend_schema(responses=OutputSocialMediaSerializer, tags=['User'])
+    @extend_schema(responses=OutputSocialMediaSerializer(many=True), tags=['Social Media'])
     def get(self, request):
         profile = get_user_profile(user=request.user)
         social_media = get_profile_social_media(profile=profile)
         serializer = self.OutputSocialMediaSerializer(instance=social_media, many=True)
         return Response(data=serializer.data)
+
+    @extend_schema(request=InputSocialMediaSerializer, responses=OutputSocialMediaSerializer, tags=['Social Media'])
+    def post(self, request):
+        serializer = self.InputSocialMediaSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        profile = get_user_profile(user=request.user)
+        link = add_social_media_to_profile(profile=profile, data=serializer.validated_data)
+        if not link:
+            return Response(
+                data={'details': {'type': ["this social media type is already exists for this user"]}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        output_serializer = self.OutputSocialMediaSerializer(instance=link)
+        return Response(data=output_serializer.data)
+
+
+class UserProfileSocialMediaDetailApi(ApiAuthMixin, APIView):
+    @extend_schema(tags=['Social Media'])
+    def delete(self, request, social_media_uuid):
+        profile = get_user_profile(user=request.user)
+        try:
+            social_media = ProfileLinks.objects.get(uuid=social_media_uuid, profile=profile)
+        except:
+            return Response(
+                data={'details': {'social_media_uuid': ["No social media found with given uuid for this user"]}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        social_media.delete()
+        return Response(status=status.HTTP_200_OK)
+
 
 
 class FollowProfileApi(ActiveProfileMixin, APIView):

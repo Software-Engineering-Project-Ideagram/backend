@@ -17,3 +17,8 @@ class Address(models.Model):
     city = models.CharField(max_length=200, blank=True, null=True)
     address = models.CharField(max_length=1000, blank=True, null=True)
     zip_code = models.CharField(max_length=100, blank=True, null=True)
+
+
+class ForbiddenWord(models.Model):
+    word = models.CharField(unique=True, max_length=200)
+

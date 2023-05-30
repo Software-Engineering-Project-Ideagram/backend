@@ -49,8 +49,7 @@ class Profile(BaseModel, models.Model):
     @property
     def is_profile_complete(self):
         return bool(self.first_name) and bool(self.last_name) and bool(self.address.state) and \
-            bool(self.address.city) and bool(self.birth_date) and \
-            ProfileLinks.objects.filter(profile=self).count() > 3
+            bool(self.address.city) and bool(self.birth_date)
 
     def __str__(self):
         return f"{self.user} >> {self.username}"
@@ -69,7 +68,6 @@ class ProfileLinks(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     type = models.CharField(max_length=15, choices=__LINK_TYPE_CHOICES)
     link = models.URLField(max_length=500)
-    priority = models.PositiveSmallIntegerField()
 
     class Meta:
         unique_together = ('profile', 'type')

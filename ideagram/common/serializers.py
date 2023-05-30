@@ -4,7 +4,6 @@ from rest_framework.relations import RelatedField
 from django.utils.encoding import smart_str
 
 
-
 class UUIDRelatedField(RelatedField):
     """
     A read-write field that represents the target of the relationship
@@ -30,3 +29,26 @@ class UUIDRelatedField(RelatedField):
 
     def to_representation(self, obj):
         return getattr(obj, self.uuid_field)
+
+
+class StringRelatedField(RelatedField):
+    default_error_messages = {
+        'does_not_exist': _('Object with {string_field}={value} does not exist.'),
+        'invalid': _('Invalid value.'),
+    }
+
+    def __init__(self, string_field=None, **kwargs):
+        assert string_field is not None, 'The `string_field` argument is required.'
+        self.string_field = string_field
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        try:
+            return self.get_queryset().get(**{self.string_field: data})
+        except ObjectDoesNotExist:
+            self.fail('does_not_exist', string_field=self.string_field, value=smart_str(data))
+        except (TypeError, ValueError):
+            self.fail('invalid')
+
+    def to_representation(self, obj):
+        return getattr(obj, self.string_field)

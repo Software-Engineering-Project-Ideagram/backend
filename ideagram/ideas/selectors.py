@@ -2,6 +2,8 @@ from django.db.models import QuerySet
 
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
     IdeaAttachmentFile, IdeaLikes
+from ideagram.profiles.models import Profile
+from ideagram.profiles.selectors import get_user_profile
 
 from ideagram.users.models import BaseUser
 
@@ -20,7 +22,6 @@ def get_idea_by_uuid(*, uuid: str, user: BaseUser = None) -> Idea | None:
         return idea.first()
     else:
         return None
-      
 
 
 def get_idea_evolutionary_steps(*, idea: Idea) -> QuerySet(EvolutionStep):
@@ -58,7 +59,6 @@ def get_financial_step_by_uuid(*, uuid: str, user: BaseUser = None) -> Financial
         return None
 
 
-
 def get_idea_likes(*, idea_uuid: str, user: BaseUser):
     entries = IdeaLikes.objects.filter(profile_id=user.id, idea_id=idea_uuid)
     if entries.exists():
@@ -70,8 +70,8 @@ def get_idea_likes(*, idea_uuid: str, user: BaseUser):
 def get_ideas_comment(*, idea: Idea) -> QuerySet(IdeaComment):
     comments = IdeaComment.objects.filter(idea=idea)
     return comments
-  
-  
+
+
 def get_idea_collaboration_request(*, idea: Idea) -> QuerySet(CollaborationRequest):
     return CollaborationRequest.objects.filter(idea=idea)
 
@@ -122,3 +122,18 @@ def filter_ideas(
 
 
     return Idea.objects.filter(**search_params).order_by(f"-{sort_by}")
+
+
+
+def user_filter_ideas(
+        profile: Profile, classification: list = None, sort_by: str='created_at'
+        ) -> QuerySet(Idea):
+
+    search_params = {"profile": profile}
+
+    if classification:
+        search_params["classification__in"] = classification
+
+
+    return Idea.objects.filter(**search_params).order_by(f"-{sort_by}")
+

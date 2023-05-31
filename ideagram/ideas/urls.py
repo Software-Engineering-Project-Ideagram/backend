@@ -2,8 +2,8 @@ from django.urls import path
 
 from ideagram.ideas.apis import ClassificationAPI, IdeaCreateAPI, IdeaDetailView, IdeaEvolutionStepApi, \
     IdeaEvolutionDetail, IdeaFinancialStepApi, IdeaFinancialDetailApi, IdeaCommentApi, IdeaCollaborationRequestApi, \
-    IdeaCollaborationRequestDetailApi, IdeaAttachmentDetailApi, IdeaAttachmentApi, IdeaLikeApi, IdeaFilterApi, OrganizationListAPI
-
+    IdeaCollaborationRequestDetailApi, IdeaAttachmentDetailApi, IdeaAttachmentApi, IdeaLikeApi, IdeaFilterApi, \
+    OrganizationListAPI, UserIdeaFilterApi
 
 urlpatterns = [
     path('classification/list', ClassificationAPI.as_view(), name="classification-list"),
@@ -23,4 +23,5 @@ urlpatterns = [
     path('attachment/<str:idea_uuid>', IdeaAttachmentApi.as_view(), name='idea-attachment'),
     path('attachment/detail/<str:attachment_uuid>', IdeaAttachmentDetailApi.as_view(), name='attachment-detail'),
     path('filter/', IdeaFilterApi.as_view(), name='idea-filter'),
+    path('filter/user/', UserIdeaFilterApi.as_view(), name='user-idea-filter'),
 ]

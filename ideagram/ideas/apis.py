@@ -583,8 +583,6 @@ class IdeaFilterApi(APIView):
         serializer.is_valid(raise_exception=True)
 
         ideas = filter_ideas(**serializer.validated_data)
-        if not ideas:
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
         output_serializer = self.OutputIdeaFilterSerializer(instance=ideas, many=True)
         return Response(data=output_serializer.data, status=status.HTTP_200_OK)
@@ -622,8 +620,6 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
         profile = get_user_profile(user=request.user)
 
         ideas = user_filter_ideas(profile=profile, **serializer.validated_data)
-        if not ideas:
-            return Response(status=status.HTTP_404_NOT_FOUND)
 
         output_serializer = self.OutputUserIdeaFilterSerializer(instance=ideas, many=True)
         return Response(data=output_serializer.data, status=status.HTTP_200_OK)

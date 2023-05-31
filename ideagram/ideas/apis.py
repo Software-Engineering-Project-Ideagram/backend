@@ -8,14 +8,15 @@ from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin, ProfileComplet
 from ideagram.common.serializers import UUIDRelatedField, StringRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
 
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, \
+    IdeaComment, \
     IdeaAttachmentFile, Organization
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, \
     get_ideas_comment, \
     get_idea_attachments, get_attachment_by_uuid, filter_ideas, get_collaboration_request_by_uuid, \
-    get_idea_collaboration_request
+    get_idea_collaboration_request, user_filter_ideas
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
     create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, \
@@ -23,7 +24,6 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     create_comment_for_idea, add_attachment_file, is_forbidden_word_exists
 
 from ideagram.profiles.selectors import get_user_profile
-
 
 
 class ClassificationAPI(APIView):
@@ -42,11 +42,11 @@ class ClassificationAPI(APIView):
 class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
     class InputIdeaCreateSerializer(serializers.ModelSerializer):
         classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
+
         class Meta:
             model = Idea
             fields = ['classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
                       'show_likes', 'show_views', 'show_comments']
-
 
         def validate_goal(self, goal):
             if is_forbidden_word_exists(text=goal):
@@ -67,7 +67,6 @@ class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
             if is_forbidden_word_exists(text=title):
                 raise serializers.ValidationError("title contains some forbidden words")
             return title
-
 
     class OutputIdeaCreateSerializer(serializers.ModelSerializer):
         classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
@@ -340,9 +339,7 @@ class OrganizationListAPI(APIView):
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
-
 class IdeaLikeApi(APIView):
-
     class UserLikeSerializer(serializers.ModelSerializer):
         class Meta:
             model = IdeaLikes
@@ -369,7 +366,7 @@ class IdeaLikeApi(APIView):
         unlike_idea(idea_uuid=idea_uuid, user=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-      
+
 class IdeaCommentApi(ActiveProfileMixin, APIView):
     class InputIdeaCommentSerializer(serializers.ModelSerializer):
         class Meta:
@@ -391,7 +388,6 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
         serializer = self.OutputIdeaCommentSerializer(instance=comments, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-
     @extend_schema(request=InputIdeaCommentSerializer, responses=OutputIdeaCommentSerializer, tags=["Comments"])
     def post(self, request, idea_uuid):
         serializer = self.InputIdeaCommentSerializer(data=request.data)
@@ -402,7 +398,7 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
         output_serializer = self.OutputIdeaCommentSerializer(instance=comment)
         return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
 
-      
+
 class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
     class InputIdeaCollaborationRequestSerializer(serializers.ModelSerializer):
 
@@ -447,7 +443,7 @@ class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
     class InputUpdateCollaborationRequestSerializer(serializers.ModelSerializer):
         class Meta:
             model = CollaborationRequest
-            optional_fields = ['skills', 'age', 'description', 'education','salary']
+            optional_fields = ['skills', 'age', 'description', 'education', 'salary']
             required_fields = []
             fields = [*optional_fields, *required_fields]
             extra_kwargs = dict((x, {'required': False}) for x in optional_fields)
@@ -494,7 +490,6 @@ class IdeaAttachmentApi(ActiveProfileMixin, APIView):
             model = IdeaAttachmentFile
             fields = ['uuid', 'file', 'created_at']
 
-
     @extend_schema(responses=OutputAttachmentSerializer(many=True), tags=["Attachments"])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
@@ -504,7 +499,6 @@ class IdeaAttachmentApi(ActiveProfileMixin, APIView):
         attachments = get_idea_attachments(idea=idea)
         serializer = self.OutputAttachmentSerializer(instance=attachments, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
-
 
     @extend_schema(request=InputAttachmentSerializer, responses=OutputAttachmentSerializer, tags=["Attachments"])
     def post(self, request, idea_uuid):
@@ -521,7 +515,6 @@ class IdeaAttachmentApi(ActiveProfileMixin, APIView):
 
         output_serializer = self.OutputAttachmentSerializer(instance=attachment)
         return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
-
 
 
 class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
@@ -558,11 +551,11 @@ class IdeaFilterApi(APIView):
 
             return attrs
 
-
     class OutputIdeaFilterSerializer(serializers.ModelSerializer):
         views_count = serializers.SerializerMethodField()
         likes_count = serializers.SerializerMethodField()
         comments_count = serializers.SerializerMethodField()
+
         class Meta:
             model = Idea
             fields = ['uuid', 'profile', 'title', 'abstract', 'image', 'views_count', 'likes_count', 'comments_count']
@@ -591,9 +584,57 @@ class IdeaFilterApi(APIView):
         if not ideas:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-
         output_serializer = self.OutputIdeaFilterSerializer(instance=ideas, many=True)
         return Response(data=output_serializer.data, status=status.HTTP_200_OK)
 
 
+class UserIdeaFilterApi(ApiAuthMixin, APIView):
+    class InputUserIdeaFilterSerializer(serializers.Serializer):
+        classification = StringRelatedField(
+            queryset=Classification.objects.all(),
+            string_field='title',
+            many=True,
+            required=False
+        )
+        sort_by = serializers.ChoiceField(choices=[
+            ('view', 'views_count'), ('like', 'likes_count'), ('comment', 'comments_count'), ('date', 'created_at')
+        ], required=False)
 
+    class OutputUserIdeaFilterSerializer(serializers.ModelSerializer):
+        views_count = serializers.SerializerMethodField()
+        likes_count = serializers.SerializerMethodField()
+        comments_count = serializers.SerializerMethodField()
+
+        class Meta:
+            model = Idea
+            fields = ['uuid', 'profile', 'title', 'abstract', 'image', 'views_count', 'likes_count', 'comments_count']
+
+        def get_views_count(self, idea):
+            if idea.show_views:
+                return idea.views_count
+            return None
+
+        def get_likes_count(self, idea):
+            if idea.show_likes:
+                return idea.likes_count
+            return None
+
+        def get_comments_count(self, idea):
+            if idea.show_comments:
+                return idea.comments_count
+            return None
+
+    @extend_schema(request=InputUserIdeaFilterSerializer, responses=OutputUserIdeaFilterSerializer(many=True),
+                   tags=['Filter'])
+    def post(self, request):
+        serializer = self.InputUserIdeaFilterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        profile = get_user_profile(user=request.user)
+
+        ideas = user_filter_ideas(profile=profile, **serializer.validated_data)
+        if not ideas:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        output_serializer = self.OutputUserIdeaFilterSerializer(instance=ideas, many=True)
+        return Response(data=output_serializer.data, status=status.HTTP_200_OK)

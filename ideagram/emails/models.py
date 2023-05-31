@@ -1,3 +1,4 @@
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from ideagram.users.models import BaseUser
 
@@ -15,6 +16,15 @@ class Email(models.Model):
 
 
 class SentEmail(models.Model):
-    email_id = models.ForeignKey(Email, on_delete=models.CASCADE)
-    user_id = models.ForeignKey(BaseUser, on_delete=models.CASCADE)
+    email = models.ForeignKey(Email, on_delete=models.CASCADE)
+    user = models.ForeignKey(BaseUser, on_delete=models.CASCADE)
+    is_send = models.BooleanField(default=False)
+
+    def send_email(self, sender_email):
+        email = EmailMultiAlternatives(subject=self.email.subject, from_email=sender_email,
+                                       to=[self.user.email])
+        email.attach_alternative(self.email.content, "text/html")
+        email.send()
+        self.is_send = True
+        self.save()
 

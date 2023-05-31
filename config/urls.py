@@ -7,6 +7,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from ideagram.profiles.views import verify_email
 
 urlpatterns = [
     path("schema/", SpectacularAPIView.as_view(api_version="v1"), name="schema"),
@@ -14,4 +15,5 @@ urlpatterns = [
     path("redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path('admin/', admin.site.urls),
     path('api/', include(('ideagram.api.urls', 'api'))),
+    path('profile/verification/<str:token>', verify_email, name="email-verification"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -540,7 +540,8 @@ class IdeaFilterApi(APIView):
         usernames = serializers.ListField(child=serializers.CharField(max_length=128), required=False)
         emails = serializers.ListField(child=serializers.EmailField(), required=False)
         sort_by = serializers.ChoiceField(choices=[
-            ('view', 'views_count'), ('like', 'likes_count'), ('comment', 'comments_count'), ('date', 'created_at')
+            ('views_count', 'views_count'), ('likes_count', 'likes_count'), ('comments_count', 'comments_count'),
+            ('created_at', 'created_at')
         ], required=False)
 
         def validate(self, attrs):
@@ -558,7 +559,8 @@ class IdeaFilterApi(APIView):
 
         class Meta:
             model = Idea
-            fields = ['uuid', 'profile', 'title', 'abstract', 'image', 'views_count', 'likes_count', 'comments_count']
+            fields = ['uuid', 'profile', 'title', 'abstract', 'goal', 'image', 'views_count', 'likes_count',
+                      'comments_count']
 
         def get_views_count(self, idea):
             if idea.show_views:
@@ -597,7 +599,8 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
             required=False
         )
         sort_by = serializers.ChoiceField(choices=[
-            ('view', 'views_count'), ('like', 'likes_count'), ('comment', 'comments_count'), ('date', 'created_at')
+            ('views_count', 'views_count'), ('likes_count', 'likes_count'), ('comments_count', 'comments_count'),
+            ('created_at', 'created_at')
         ], required=False)
 
     class OutputUserIdeaFilterSerializer(serializers.ModelSerializer):
@@ -607,22 +610,8 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
 
         class Meta:
             model = Idea
-            fields = ['uuid', 'profile', 'title', 'abstract', 'image', 'views_count', 'likes_count', 'comments_count']
-
-        def get_views_count(self, idea):
-            if idea.show_views:
-                return idea.views_count
-            return None
-
-        def get_likes_count(self, idea):
-            if idea.show_likes:
-                return idea.likes_count
-            return None
-
-        def get_comments_count(self, idea):
-            if idea.show_comments:
-                return idea.comments_count
-            return None
+            fields = ['uuid', 'profile', 'title', 'goal', 'abstract', 'image', 'views_count', 'likes_count',
+                      'comments_count']
 
     @extend_schema(request=InputUserIdeaFilterSerializer, responses=OutputUserIdeaFilterSerializer(many=True),
                    tags=['Filter'])

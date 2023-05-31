@@ -11,11 +11,13 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from drf_spectacular.utils import extend_schema
 from ideagram.profiles.services import register, update_user_profile, follow_profile, add_social_media_to_profile
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
-from .selectors import get_user_profile, get_profile_social_media, get_profile_using_username
+from .selectors import get_user_profile, get_profile_social_media, get_profile_using_username, get_profile_followers, \
+    get_profile_followings
 
 from ideagram.common.models import Address
 from ideagram.common.utils import inline_model_serializer
 from ..users.Exceptions import InvalidPassword
+from ideagram.users.models import BaseUser
 
 BASE_USER = get_user_model()
 
@@ -73,6 +75,12 @@ class RegisterApi(APIView):
 
 class UserProfileApi(ApiAuthMixin, APIView):
     class OutPutUserProfileSerializer(serializers.ModelSerializer):
+        user = inline_model_serializer(
+            serializer_model=BaseUser,
+            serializer_name='output_user_profile_user',
+            model_fields=['email']
+        )()
+
         address = inline_model_serializer(
             serializer_name="user_profile_address_serializer",
             serializer_model=Address,
@@ -83,7 +91,7 @@ class UserProfileApi(ApiAuthMixin, APIView):
 
         class Meta:
             model = Profile
-            fields = ("username", "profile_image", "first_name", "last_name", "gender", "birth_date", "address", "bio"
+            fields = ('user', "username", "profile_image", "first_name", "last_name", "gender", "birth_date", "address", "bio"
                       , "follower_count", "following_count", "idea_count", "is_public", "is_active", "is_banned")
 
     class InputUpdateUserProfileSerializer(serializers.ModelSerializer):
@@ -143,7 +151,7 @@ class UserProfileApi(ApiAuthMixin, APIView):
     @extend_schema(responses=OutPutUserProfileSerializer, tags=['User'])
     def get(self, request):
         query = get_user_profile(user=request.user)
-        return Response(self.OutPutUserProfileSerializer(query, context={"request": request}).data)
+        return Response(self.OutPutUserProfileSerializer(instance=query).data)
 
     @extend_schema(request=InputUpdateUserProfileSerializer, responses=OutPutUserProfileSerializer, tags=['User'])
     def put(self, request):
@@ -158,6 +166,43 @@ class UserProfileApi(ApiAuthMixin, APIView):
 
         update_serializer = self.OutPutUserProfileSerializer(instance=updated_profile)
         return Response(data=update_serializer.data)
+
+
+class UserProfileFollowerListApi(ApiAuthMixin, APIView):
+    class OutputFollowerProfileSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Profile
+            fields = ['username', 'first_name', 'last_name', 'profile_image', 'follower_count', 'following_count',
+                      'idea_count']
+
+    @extend_schema(responses=OutputFollowerProfileSerializer(many=True), tags=['Follow'])
+    def get(self, request, username):
+        profile = get_profile_using_username(username=username)
+        if not profile:
+            return Response(data={'details': {"username": ["No profile found with this username"]}}
+                            , status=status.HTTP_404_NOT_FOUND)
+        followers = get_profile_followers(profile=profile)
+        output_serializer = self.OutputFollowerProfileSerializer(instance=followers, many=True)
+        return Response(data=output_serializer.data)
+
+
+
+class UserProfileFollowingListApi(ApiAuthMixin, APIView):
+    class OutputFollowingProfileSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Profile
+            fields = ['username', 'first_name', 'last_name', 'profile_image', 'follower_count', 'following_count',
+                      'idea_count']
+
+    @extend_schema(responses=OutputFollowingProfileSerializer(many=True), tags=['Follow'])
+    def get(self, request, username):
+        profile = get_profile_using_username(username=username)
+        if not profile:
+            return Response(data={'details': {"username": ["No profile found with this username"]}}
+                            , status=status.HTTP_404_NOT_FOUND)
+        followers = get_profile_followings(profile=profile)
+        output_serializer = self.OutputFollowingProfileSerializer(instance=followers, many=True)
+        return Response(data=output_serializer.data)
 
 
 class UserProfileSocialMediaApi(ApiAuthMixin, APIView):
@@ -208,7 +253,6 @@ class UserProfileSocialMediaDetailApi(ApiAuthMixin, APIView):
 
         social_media.delete()
         return Response(status=status.HTTP_200_OK)
-
 
 
 class FollowProfileApi(ActiveProfileMixin, APIView):

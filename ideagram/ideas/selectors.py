@@ -117,7 +117,8 @@ def filter_ideas(
     if usernames:
         search_params["profile__username__in"] = usernames
 
-    if usernames:
+    if emails:
         search_params["profile__user__email__in"] = emails
+
 
     return Idea.objects.filter(**search_params).order_by(f"-{sort_by}")

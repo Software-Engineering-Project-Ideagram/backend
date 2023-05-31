@@ -6,6 +6,7 @@ from .models import Profile, Following, ProfileLinks
 from .selectors import get_user_profile
 from ..common.models import Address
 from ..common.utils import update_model_instance
+from ..emails.tasks import send_email_confirmation
 from ..users.Exceptions import InvalidPassword
 
 BASE_USER = get_user_model()
@@ -23,7 +24,7 @@ def create_user(*, email: str, password: str) -> BASE_USER:
 def register(*, username: str, email: str, password: str) -> BASE_USER:
     user = create_user(email=email, password=password)
     create_profile(user=user, username=username)
-
+    send_email_confirmation.delay(user_id=user.id, user_email=email, username=username)
     return user
 
 

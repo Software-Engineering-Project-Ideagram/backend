@@ -403,6 +403,7 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
     class InputIdeaCollaborationRequestSerializer(serializers.ModelSerializer):
 
         class Meta:
+
             model = CollaborationRequest
             fields = ['skills', 'age', 'education', 'description', 'salary']
 
@@ -602,9 +603,6 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
         ], required=False)
 
     class OutputUserIdeaFilterSerializer(serializers.ModelSerializer):
-        views_count = serializers.SerializerMethodField()
-        likes_count = serializers.SerializerMethodField()
-        comments_count = serializers.SerializerMethodField()
 
         class Meta:
             model = Idea

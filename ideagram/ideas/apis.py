@@ -405,14 +405,14 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
         class Meta:
 
             model = CollaborationRequest
-            fields = ['skills', 'age', 'education', 'description', 'salary']
+            fields = ['title', 'status', 'skills', 'age', 'education', 'description', 'salary']
 
     class OutputCollaborationRequestSerializer(serializers.ModelSerializer):
         idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
 
         class Meta:
             model = CollaborationRequest
-            fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
+            fields = ['title', 'status', 'uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
 
     @extend_schema(responses=OutputCollaborationRequestSerializer(many=True), tags=['Collaboration Request'])
     def get(self, request, idea_uuid):
@@ -444,7 +444,7 @@ class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
     class InputUpdateCollaborationRequestSerializer(serializers.ModelSerializer):
         class Meta:
             model = CollaborationRequest
-            optional_fields = ['skills', 'age', 'description', 'education', 'salary']
+            optional_fields = ['title', 'status', 'skills', 'age', 'description', 'education', 'salary']
             required_fields = []
             fields = [*optional_fields, *required_fields]
             extra_kwargs = dict((x, {'required': False}) for x in optional_fields)
@@ -454,7 +454,7 @@ class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
 
         class Meta:
             model = CollaborationRequest
-            fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
+            fields = ['uuid', 'title', 'status', 'idea', 'skills', 'age', 'description', 'education', 'salary']
 
     @extend_schema(request=InputUpdateCollaborationRequestSerializer,
                    responses=OutputCollaborationRequestDetailSerializer,

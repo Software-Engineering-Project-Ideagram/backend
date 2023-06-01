@@ -1,8 +1,9 @@
 import uuid as uuid
 from django.db import models
+from django.utils import timezone
 
 from ideagram.common.models import BaseModel
-from ideagram.common.utils import idea_upload_image_path
+from ideagram.common.utils import idea_upload_image_path, idea_upload_attachment_path
 from ideagram.profiles.models import Profile
 
 
@@ -12,6 +13,9 @@ from ideagram.profiles.models import Profile
 class Classification(models.Model):
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     title = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.title
 
 
 class Idea(BaseModel):
@@ -37,6 +41,8 @@ class Idea(BaseModel):
     show_views = models.BooleanField(default=True)
     show_comments = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.title
 
 
 class EvolutionStep(models.Model):
@@ -49,7 +55,6 @@ class EvolutionStep(models.Model):
 
     class Meta:
         unique_together = ('idea', 'priority')
-
 
 
 class FinancialStep(models.Model):
@@ -67,11 +72,54 @@ class FinancialStep(models.Model):
     class Meta:
         unique_together = ('idea', 'priority')
 
+
+
+        
 class IdeaComment(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     date = models.DateTimeField(auto_now_add=True)
     profile = models.ForeignKey(to=Profile, on_delete=models.CASCADE)
     idea = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
     comment = models.CharField(max_length=1000)
+
+
+class Organization(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    name = models.CharField(unique=True, max_length=200)
+
+    
+class IdeaLikes(models.Model):
+
+    date = models.DateField(auto_now_add=True)
+    profile_id = models.ForeignKey(to=Profile, on_delete=models.CASCADE)
+    idea_id = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('profile_id', 'idea_id')
+
+
+
+class CollaborationRequest(models.Model):
+    COLLABORATION_STATUS_TYPES = ['full_time', 'part_time', 'other']
+
+    __COLLABORATION_STATUS_CHOICES = [(x, x) for x in COLLABORATION_STATUS_TYPES]
+
+    title = models.CharField(max_length=200, blank=True, null=True)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    skills = models.CharField(max_length=200)
+    age = models.PositiveIntegerField()
+    status = models.CharField(max_length=15, choices=__COLLABORATION_STATUS_CHOICES, blank=True, null=True)
+    education = models.CharField(max_length=200)
+    description = models.TextField()
+    salary = models.PositiveIntegerField()
+
+
+
+class IdeaAttachmentFile(models.Model):
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    idea = models.ForeignKey(to=Idea, on_delete=models.CASCADE)
+    file = models.FileField(upload_to=idea_upload_attachment_path)
+    created_at = models.DateTimeField(default=timezone.now)
 
 

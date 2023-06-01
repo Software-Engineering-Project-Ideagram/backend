@@ -46,6 +46,11 @@ class Profile(BaseModel, models.Model):
     def is_profile_active(self):
         return self.is_active and not self.is_banned
 
+    @property
+    def is_profile_complete(self):
+        return bool(self.first_name) and bool(self.last_name) and bool(self.address.state) and \
+            bool(self.address.city) and bool(self.birth_date)
+
     def __str__(self):
         return f"{self.user} >> {self.username}"
 
@@ -63,7 +68,12 @@ class ProfileLinks(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     type = models.CharField(max_length=15, choices=__LINK_TYPE_CHOICES)
     link = models.URLField(max_length=500)
-    priority = models.PositiveSmallIntegerField()
 
     class Meta:
         unique_together = ('profile', 'type')
+
+
+class Following(models.Model):
+    date = models.DateField(auto_now_add=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='user_profile')
+    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='following')

@@ -1,0 +1,3 @@
+
+
+IDEA_MAX_REPORT_COUNT = 10

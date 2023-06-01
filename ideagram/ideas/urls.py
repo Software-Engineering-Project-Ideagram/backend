@@ -18,7 +18,7 @@ urlpatterns = [
     path('financial/detail/<str:financial_uuid>', IdeaFinancialDetailApi.as_view(), name='financial-detail'),
     path('comment/<str:idea_uuid>', IdeaCommentApi.as_view(), name='idea-comment'),
     path('collaboration/<str:idea_uuid>', IdeaCollaborationRequestApi.as_view(), name='idea-collaboration request'),
-    path('collaboration/detail/<str:collaboration_uuid>', IdeaCollaborationRequestDetailApi.as_view(),
+    path('collaboration/detail/<str:collaboration_request_uuid>', IdeaCollaborationRequestDetailApi.as_view(),
          name='collaboration-request-detail'),
     path('attachment/<str:idea_uuid>', IdeaAttachmentApi.as_view(), name='idea-attachment'),
     path('attachment/detail/<str:attachment_uuid>', IdeaAttachmentDetailApi.as_view(), name='attachment-detail'),

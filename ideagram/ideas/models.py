@@ -17,6 +17,7 @@ class Classification(models.Model):
     def __str__(self):
         return self.title
 
+
 class Idea(BaseModel):
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -99,10 +100,16 @@ class IdeaLikes(models.Model):
 
 
 class CollaborationRequest(models.Model):
+    COLLABORATION_STATUS_TYPES = ['full_time', 'part_time', 'other']
+
+    __COLLABORATION_STATUS_CHOICES = [(x, x) for x in COLLABORATION_STATUS_TYPES]
+
+    title = models.CharField(max_length=200, blank=True, null=True)
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     skills = models.CharField(max_length=200)
     age = models.PositiveIntegerField()
+    status = models.CharField(max_length=15, choices=__COLLABORATION_STATUS_CHOICES, blank=True, null=True)
     education = models.CharField(max_length=200)
     description = models.TextField()
     salary = models.PositiveIntegerField()

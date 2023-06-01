@@ -30,4 +30,39 @@ class FollowProfileTest(TestCase):
         with self.assertRaises(Profile.DoesNotExist):
             follow_profile(user=user1, following_username='user3')
 
-   
+    def test_following_a_user(self):
+        profile1 = Profile.objects.get(username="user1")
+        profile2 = Profile.objects.get(username="user2")
+        user1 = profile1.user
+
+        follow_profile(user=user1, following_username=profile2.username)
+
+        temp = Following.objects.filter(profile=profile1, profile_following=profile2)
+        self.assertEqual(len(temp), 1)
+
+        profile1 = Profile.objects.get(username="user1")
+        profile2 = Profile.objects.get(username="user2")
+        self.assertEqual(profile1.following_count, 1)
+        self.assertEqual(profile2.follower_count, 1)
+
+        self.assertEqual(profile1.follower_count, 0)
+        self.assertEqual(profile2.following_count, 0)
+
+    def test_following_a_followed_profile(self):
+        profile1 = Profile.objects.get(username="user1")
+        profile2 = Profile.objects.get(username="user2")
+        user1 = profile1.user
+
+        follow_profile(user=user1, following_username=profile2.username)
+
+        with self.assertRaises(ValueError):
+            follow_profile(user=user1, following_username=profile2.username)
+
+        profile1 = Profile.objects.get(username="user1")
+        profile2 = Profile.objects.get(username="user2")
+
+        self.assertEqual(profile1.following_count, 1)
+        self.assertEqual(profile2.follower_count, 1)
+
+        self.assertEqual(profile1.follower_count, 0)
+        self.assertEqual(profile2.following_count, 0)

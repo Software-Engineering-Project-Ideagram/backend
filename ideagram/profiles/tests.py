@@ -167,3 +167,18 @@ class ProfileTest(TestCase):
         profile2=Profile.objects.get(user=baseuser2, username="user2")
         self.assertTrue(profile1.is_visible)
         self.assertFalse(profile2.is_visible)
+    def test_is_profile_active(self):
+        baseuser1 = BaseUser.objects.get(email="user1@gmail.com")
+        baseuser2 = BaseUser.objects.get(email="user2@gmail.com")
+        profile1 = Profile.objects.get(user=baseuser1, username="user1")
+        profile2 = Profile.objects.get(user=baseuser2, username="user2")
+        self.assertTrue(profile1.is_visible)
+        self.assertFalse(profile2.is_visible)
+
+    def test_str(self):
+        baseuser1 = BaseUser.objects.get(email="user1@gmail.com")
+        baseuser2 = BaseUser.objects.get(email="user2@gmail.com")
+        profile1 = Profile.objects.get(user=baseuser1, username="user1")
+        profile2 = Profile.objects.get(user=baseuser2, username="user2")
+        self.assertEqual(str(profile1),"user1@gmail.com >> user1")
+        self.assertEqual(str(profile2),"user2@gmail.com >> user2")

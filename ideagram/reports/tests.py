@@ -37,4 +37,19 @@ class ReportsTest(TestCase):
         with self.assertRaises(ValueError):
             profile_report=create_profile_report(reporter=reporter_profile, data=data)
 
+    def test_exist_reported_profile(self):
+        data={
+            "profile_username":"user2",
+            "report_reasons": "Spam",
+            "description": "Spam",
+        }
+        reporter_profile=Profile.objects.get(username="user1")
+        reported_profile=Profile.objects.get(username="user2")
+        res=create_profile_report(reporter=reporter_profile, data=data)
+
+        reported_profile2 = res.profile_id
+        reporter_profile2 = res.reporter_id
+
+        self.assertEqual(reported_profile.username, reported_profile2.username)
+        self.assertEqual(reporter_profile.username, reporter_profile2.username)
 

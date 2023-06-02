@@ -73,7 +73,9 @@ def follow_profile(*, user, following_username):
 @transaction.atomic
 def add_social_media_to_profile(*, profile: Profile, data) -> ProfileLinks | None:
     try:
-        link = ProfileLinks.objects.create(profile=profile, **data)
+        link=ProfileLinks(profile=profile,**data)
+        link.full_clean()
+        link.save()
     except IntegrityError:
         return None
 

@@ -711,38 +711,47 @@ class SelectCollaborationRequest(TestCase):
         self.assertEqual(cr, self.cr)
 
 
-# class SelectIdeaCommentTest(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=4)
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "I Will Survive",
-#             "goal": "release music. the best song of the century",
-#             "abstract": "a song. Classic & Cultural",
-#             "description": "artist: Gloria Gaynor",
-#             "image": "",
-#             "max_donation": 30000,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#         date = {
-#             "comment": "a good song from a prefect signer"
-#         }
-#
-#         commenter = Profile.objects.get(pk=1)
-#         self.new_comment = create_comment_for_idea(idea=self.idea, profile=commenter, data=date)
-#
-#     def test_comment_by_idea(self):
-#         comment = get_ideas_comment(idea=self.idea).first()
-#         self.assertEqual(comment, self.new_comment)
-#
-#
+class SelectIdeaCommentTest(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        base_user2 = BaseUser.objects.create_user(email="user2@gmail.com", password="user", is_active=True,
+                                                  is_admin=False)
+        self.commenter = Profile.objects.create(user=base_user2, username="user2", is_public=True, is_active=True,
+                                                is_banned=False)
+
+        class_music = Classification.objects.create(title='music')
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        date = {
+            "comment": "a good song from a prefect signer"
+        }
+
+        self.new_comment = create_comment_for_idea(idea=self.idea, profile=self.commenter, data=date)
+
+    def test_comment_by_idea(self):
+        comment = get_ideas_comment(idea=self.idea).first()
+        self.assertEqual(comment, self.new_comment)
+
+
 # class SelectIdeaLikesTest(TestCase):
 #
 #     def setUp(self) -> None:

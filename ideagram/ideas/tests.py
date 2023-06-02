@@ -548,33 +548,37 @@ class IdeaUnlikeTest(TestCase):
         self.assertFalse(is_exist)
 
 
-# class SelectIdeaTest(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=2)
-#
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "incomplete2",
-#             "goal": "release music",
-#             "abstract": "song about life",
-#             "description": "artist: Backstreet Boys",
-#             "image": "",
-#             "max_donation": 27600,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#     def test_get_idea_by_uuid(self):
-#         idea_result = get_idea_by_uuid(uuid=self.idea.uuid)
-#         self.assertEqual(self.idea.pk, idea_result.pk)
-#
-#
+class SelectIdeaTest(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "incomplete2",
+            "goal": "release music",
+            "abstract": "song about life",
+            "description": "artist: Backstreet Boys",
+            "image": "",
+            "max_donation": 27600,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+
+        self.idea = create_idea(profile=profile, data=data)
+
+    def test_get_idea_by_uuid(self):
+        idea_result = get_idea_by_uuid(uuid=self.idea.uuid)
+        self.assertEqual(self.idea.pk, idea_result.pk)
+
+
 # class SelectEvolutionaryStepTest(TestCase):
 #
 #     def setUp(self) -> None:

@@ -770,7 +770,7 @@ class SavedIdeaListApi(ApiAuthMixin, APIView):
             serializer_name="output_saved_idea_list_idea_serializer",
             model_fields=['uuid', 'profile', 'title', 'abstract', 'goal', 'image', 'views_count', 'likes_count',
                           'comments_count']
-        )
+        )()
 
         class Meta:
             model = SavedIdea

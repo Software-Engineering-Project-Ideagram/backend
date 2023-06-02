@@ -618,6 +618,10 @@ class SelectCollaborationRequest(TestCase):
         cr = get_collaboration_request_by_uuid(uuid=self.cr.uuid)
         self.assertEqual(cr, self.cr)
 
+    def test_cr_by_idea(self):
+        cr = get_idea_collaboration_request(idea=self.idea).first()
+        self.assertEqual(cr, self.cr)
+
 
 class SelectIdeaCommentTest(TestCase):
 

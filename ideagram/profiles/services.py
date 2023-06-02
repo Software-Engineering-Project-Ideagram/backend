@@ -1,9 +1,12 @@
 from django.contrib.auth import get_user_model, authenticate
 from django.db import transaction
 from psycopg2 import IntegrityError
+from django.core.cache import cache
+from random import choice
+from string import ascii_uppercase, digits
 
 from .models import Profile, Following, ProfileLinks
-from .selectors import get_user_profile
+from .selectors import get_user_profile, get_profile_using_username
 from ..common.models import Address
 from ..common.utils import update_model_instance
 from ..emails.tasks import send_email_confirmation
@@ -82,3 +85,49 @@ def add_social_media_to_profile(*, profile: Profile, data) -> ProfileLinks | Non
         return None
 
     return link
+
+
+
+@transaction.atomic
+def change_password(*, username: str, validation_code: str, new_password: str) -> bool:
+    profile = get_profile_using_username(username=username)
+    if not profile:
+        raise ValueError('Invalid username')
+
+    cached_validation_code = cache.get(f"change_password__{username}")
+
+    if cached_validation_code is None:
+        return False
+
+    if cached_validation_code[1] >= 3:
+        return False
+
+    if cached_validation_code[0] != validation_code.lower():
+        cache.set(
+            f"change_password__{username}",
+            [cached_validation_code[0], cached_validation_code[1]+1],
+            cache.ttl(f"change_password__{username}")
+        )
+
+    user = profile.user
+    user.set_password(new_password)
+    user.save()
+
+    cache.delete(f"change_password__{username}")
+
+    return True
+
+
+
+def send_password_change_verification_code(*, username):
+    profile = get_profile_using_username(username=username)
+    if not profile:
+        raise ValueError('Invalid username')
+
+    validation_code = ''.join(choice(ascii_uppercase+digits) for i in range(6))
+    user = profile.user
+
+    cache.set(f"change_password__{username}", [validation_code.lower(), 0], 3*60)
+
+    send_email_confirmation.delay(user_id=user.id, username=profile.username, validation_code=validation_code)
+

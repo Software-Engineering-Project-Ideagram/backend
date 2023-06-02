@@ -9,7 +9,8 @@ from .validators import number_validator, special_char_exist_validator, letter_v
 from .models import Profile, ProfileLinks
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from drf_spectacular.utils import extend_schema
-from ideagram.profiles.services import register, update_user_profile, follow_profile, add_social_media_to_profile
+from ideagram.profiles.services import register, update_user_profile, follow_profile, add_social_media_to_profile, \
+    change_password, send_password_change_verification_code
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from .selectors import get_user_profile, get_profile_social_media, get_profile_using_username, get_profile_followers, \
     get_profile_followings, get_general_user_profile
@@ -296,3 +297,48 @@ class FollowProfileApi(ActiveProfileMixin, APIView):
             return Response(status=status.HTTP_201_CREATED)
         except (Profile.DoesNotExist, ValueError):
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class ForgetPasswordApi(APIView):
+    class InputForgetPasswordSerializer(serializers.Serializer):
+        username = serializers.CharField(max_length=128, required=False)
+
+    @extend_schema(request=InputForgetPasswordSerializer, tags=["Forget Password"])
+    def post(self, request):
+        serializer = self.InputForgetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            send_password_change_verification_code(**serializer.validated_data)
+        except ValueError:
+            return Response("invalid username", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_200_OK)
+
+
+
+
+class ChangePasswordApi(APIView):
+    class InputChangePasswordSerializer(serializers.Serializer):
+        username = serializers.CharField(max_length=128, required=False)
+        validation_code = serializers.CharField(max_length=6)
+        new_password = serializers.CharField(
+            max_length=256,
+            validators=[
+                number_validator,
+                letter_validator,
+                special_char_exist_validator,
+                MinLengthValidator(limit_value=8)
+            ]
+        )
+
+    @extend_schema(request=InputChangePasswordSerializer, tags=["Forget Password"])
+    def post(self, request):
+        serializer = self.InputChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        is_changed = change_password(**serializer.validated_data)
+        if is_changed:
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+

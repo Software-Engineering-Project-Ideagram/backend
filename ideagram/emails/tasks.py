@@ -40,3 +40,18 @@ def send_email_confirmation(user_email, user_id, username):
     send_mail = SentEmail.objects.create(email=email, user=BaseUser.objects.get(id=user_id))
     send_mail.send_email(sender_email=settings.EMAIL_HOST_USER)
 
+
+
+@app.task(name='verify_email', queue='email')
+def send_email_confirmation(user_id, username, validation_code):
+
+    email_subject = "Change Password"
+    email_detail = {
+        'first_name': username,
+        'validation_code': validation_code
+    }
+    email_content = render_to_string("email/authentication/change_password.html", context=email_detail)
+    email = Email.objects.create(email_type='password_reset', subject=email_subject, content=email_content)
+    send_mail = SentEmail.objects.create(email=email, user=BaseUser.objects.get(id=user_id))
+    send_mail.send_email(sender_email=settings.EMAIL_HOST_USER)
+

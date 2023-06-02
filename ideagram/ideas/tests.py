@@ -1,8 +1,9 @@
 from unittest import TestCase
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment
 from ideagram.profiles.models import Profile
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request
+    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
+    create_comment_for_idea
 
 
 class TestCreateIdea(TestCase):
@@ -365,6 +366,43 @@ class CollaborationRequestUpdate(TestCase):
         self.assertNotEqual(age1, self.cr.age)
         self.assertNotEqual(education1, self.cr.education)
         self.assertNotEqual(salary1, self.cr.salary)
+
+
+class CommentTest(TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=4)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+    def test_create_comment(self):
+
+        date = {
+            "comment": "a good song from a prefect signer"
+        }
+
+        commenter = Profile.objects.get(pk=1)
+        new_comment = create_comment_for_idea(idea=self.idea, profile=commenter, data=date)
+
+        is_exist = IdeaComment.objects.filter(pk=new_comment.pk).exists()
+        self.assertTrue(is_exist)
+
+        self.assertEqual(self.idea.pk, new_comment.idea.pk)
+        self.assertEqual(commenter.pk, new_comment.profile.pk)
+
 
 
 

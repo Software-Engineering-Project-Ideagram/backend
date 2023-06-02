@@ -1,8 +1,8 @@
 from unittest import TestCase
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest
 from ideagram.profiles.models import Profile
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step
+    create_financial_step, update_financial_step, create_collaboration_request
 
 
 class TestCreateIdea(TestCase):
@@ -269,6 +269,42 @@ class TestFinancialStepUpdate(TestCase):
         self.assertNotEqual(priority1, self.fs.priority)
 
 
+class CollaborationRequestCreate(TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=3)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+    def test_create_cr(self):
+
+        data = {
+          "title": "villon player",
+          "status": "full_time",
+          "skills": "reading note and 10 years experience about music",
+          "age": 22,
+          "education": "jazz music",
+          "description": "string",
+          "salary": 15000
+        }
+
+        cr = create_collaboration_request(idea=self.idea, data=data)
+
+        is_exists = CollaborationRequest.objects.filter(pk=cr.pk).exists()
+        self.assertTrue(is_exists)
 
 
 

@@ -6,7 +6,8 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
     create_comment_for_idea, like_idea, unlike_idea
 
-from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid, get_idea_financial_steps
+from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid, get_idea_financial_steps, \
+    get_financial_step_by_uuid
 
 
 class TestCreateIdea(TestCase):
@@ -570,6 +571,12 @@ class SelectFinancialStepTest(TestCase):
     def test_fs_by_idea(self):
         fs = get_idea_financial_steps(idea=self.idea)
         self.assertEqual(self.fs, fs.first())
+
+    def test_fs_by_uuid(self):
+        fs = get_financial_step_by_uuid(uuid=self.fs.uuid)
+        self.assertEqual(fs, self.fs)
+
+
 
 
 

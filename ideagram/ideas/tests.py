@@ -6,6 +6,8 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
     create_comment_for_idea, like_idea, unlike_idea
 
+from ideagram.ideas.selectors import get_idea_by_uuid
+
 
 class TestCreateIdea(TestCase):
 
@@ -469,6 +471,33 @@ class IdeaUnlikeTest(TestCase):
 
         is_exist = IdeaLikes.objects.filter(pk=self.like.pk).exists()
         self.assertFalse(is_exist)
+
+
+class SelectIdeaTest(TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=2)
+
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "incomplete2",
+            "goal": "release music",
+            "abstract": "song about life",
+            "description": "artist: Backstreet Boys",
+            "image": "",
+            "max_donation": 27600,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+
+        self.idea = create_idea(profile=profile, data=data)
+
+    def test_get_idea_by_uuid(self):
+        idea_result = get_idea_by_uuid(uuid=self.idea.uuid)
+        self.assertEqual(self.idea.pk, idea_result.pk)
 
 
 

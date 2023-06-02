@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from ideagram.common.models import Address
 from ideagram.profiles.models import Profile, Following
+from ideagram.profiles.selectors import get_profile_using_username
 from ideagram.profiles.services import follow_profile, register, update_user_profile, add_social_media_to_profile
 from ideagram.users.Exceptions import InvalidPassword
 from ideagram.users.models import BaseUser
@@ -209,3 +210,20 @@ class ProfileTest(TestCase):
         self.assertFalse(profile1.is_profile_complete)
         self.assertFalse(profile2.is_profile_complete)
         self.assertTrue(profile3.is_profile_complete)
+
+
+class SelectorTest(TestCase):
+    def setUp(self):
+        baseuser1 = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        baseuser1.is_email_verified = True
+        baseuser1.save()
+        profile1 = Profile.objects.create(user=baseuser1, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+    def test_get_profile_using_username(self):
+        profile1=get_profile_using_username(username="user1")
+        profile2=get_profile_using_username(username="user2")
+        self.assertEqual(profile1.username,"user1")
+        self.assertEqual(profile2,None)

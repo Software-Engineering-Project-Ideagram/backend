@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from ideagram.profiles.models import Profile, Following
-from ideagram.profiles.services import follow_profile
+from ideagram.profiles.services import follow_profile,register
 from ideagram.users.models import BaseUser
 
 
@@ -66,3 +66,11 @@ class FollowProfileTest(TestCase):
 
         self.assertEqual(profile1.follower_count, 0)
         self.assertEqual(profile2.following_count, 0)
+
+
+class UserTest(TestCase):
+    def test_create_user_in_registeration(self):
+       user1= register(username="user1",email="user1@gmail.com",password="user1password")
+       self.assertEqual(str(type(user1)),"<class 'ideagram.users.models.BaseUser'>")
+       with self.assertRaises(ValueError):
+           user2 = register(username="user2", email="", password="user1password")

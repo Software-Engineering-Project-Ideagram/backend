@@ -42,8 +42,8 @@ def send_email_confirmation(user_email, user_id, username):
 
 
 
-@app.task(name='verify_email', queue='email')
-def send_email_confirmation(user_id, username, validation_code):
+@app.task(name='change-password', queue='email')
+def send_email_password_confirmation(user_id, username, validation_code):
 
     email_subject = "Change Password"
     email_detail = {

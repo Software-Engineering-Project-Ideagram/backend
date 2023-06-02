@@ -3,7 +3,8 @@ from django.urls import path
 from ideagram.ideas.apis import ClassificationAPI, IdeaCreateAPI, IdeaDetailView, IdeaEvolutionStepApi, \
     IdeaEvolutionDetail, IdeaFinancialStepApi, IdeaFinancialDetailApi, IdeaCommentApi, IdeaCollaborationRequestApi, \
     IdeaCollaborationRequestDetailApi, IdeaAttachmentDetailApi, IdeaAttachmentApi, IdeaLikeApi, IdeaFilterApi, \
-    OrganizationListAPI, UserIdeaFilterApi, IdeaOfficialInformationApi, IdeaOfficialInformationDetailApi
+    OrganizationListAPI, UserIdeaFilterApi, IdeaOfficialInformationApi, IdeaOfficialInformationDetailApi, SaveIdeaApi, \
+    SavedIdeaListApi
 
 urlpatterns = [
     path('classification/list', ClassificationAPI.as_view(), name="classification-list"),
@@ -28,5 +29,8 @@ urlpatterns = [
     path('official-info/<str:idea_uuid>', IdeaOfficialInformationApi.as_view(), name='idea-official-info'),
     path('official-info/detail/<str:information_uuid>', IdeaOfficialInformationDetailApi.as_view(),
          name='official-info-detail'),
+
+    path('save-idea/<str:idea_uuid>', SaveIdeaApi.as_view(), name='save-idea'),
+    path('save-idea/', SavedIdeaListApi.as_view(), name='save-idea-list'),
 
 ]

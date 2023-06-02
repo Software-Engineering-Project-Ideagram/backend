@@ -129,3 +129,12 @@ class OfficialInformation(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     register_number = models.CharField(max_length=10)
     description = models.CharField(max_length=500)
+
+
+class SavedIdea(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("profile", "idea")

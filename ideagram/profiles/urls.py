@@ -1,6 +1,7 @@
 from django.urls import path
 from .apis import UserProfileApi, RegisterApi, UserProfileSocialMediaApi, FollowProfileApi, \
-    UserProfileSocialMediaDetailApi, UserProfileFollowerListApi, UserProfileFollowingListApi, GeneralProfileApi
+    UserProfileSocialMediaDetailApi, UserProfileFollowerListApi, UserProfileFollowingListApi, GeneralProfileApi, \
+    ForgetPasswordApi, ChangePasswordApi
 
 urlpatterns = [
     path('register/', RegisterApi.as_view(), name="register"),
@@ -13,5 +14,7 @@ urlpatterns = [
          UserProfileSocialMediaDetailApi.as_view(),
          name="user-social-media-detail"
          ),
-    path('follow-profile/<str:following_username>', FollowProfileApi.as_view(), name="user-follow")
+    path('follow-profile/<str:following_username>', FollowProfileApi.as_view(), name="user-follow"),
+    path('forget-password/', ForgetPasswordApi.as_view(), name='forget-password'),
+    path('change-password/', ChangePasswordApi.as_view(), name='change-password'),
 ]

@@ -2,7 +2,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from ideagram.profiles.models import Profile, Following
-from ideagram.profiles.services import follow_profile,register
+from ideagram.profiles.services import follow_profile,register,update_user_profile
+from ideagram.users.Exceptions import InvalidPassword
 from ideagram.users.models import BaseUser
 
 
@@ -78,3 +79,28 @@ class UserTest(TestCase):
 
        with self.assertRaises(ValidationError):
            user2 = register(username="user1", email="user2@gmail.com", password="user1password")
+
+
+class UpdateProfileTest(TestCase):
+
+    def setUp(self):
+        baseuser1 = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="userpass",
+                                                 is_active=True, is_admin=False)
+
+        baseuser1.is_email_verified = True
+        baseuser1.save()
+        profile1 = Profile.objects.create(user=baseuser1, username="user1")
+    def test_invalid_user_authenticate(self):
+        data={"new_password":"newpass",
+              "old_password":"pldpass"}
+        with self.assertRaises(InvalidPassword):
+            user= update_user_profile(profile=Profile.objects.get(username="user1"),data=data)
+
+
+    def test_valid_user_authenticate(self):
+        data={"new_password":"newpass",
+              "old_password":"userpass"}
+
+        user= update_user_profile(profile=Profile.objects.get(username="user1"),data=data)
+        self.assertEqual(str(type(user)),"<class 'ideagram.profiles.models.Profile'>")

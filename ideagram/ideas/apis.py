@@ -96,12 +96,13 @@ class IdeaDetailView(ApiAuthMixin, APIView):
             serializer_model=Profile,
             serializer_name="output_idea_detail_profile_serializer",
             model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
-                          'idea_count']
+                          'idea_count', 'profile_image']
         )()
 
         class Meta:
             model = Idea
-            fields = ['uuid', 'profile', 'classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
+            fields = ['uuid', 'profile', 'classification', 'title', 'goal', 'abstract', 'description', 'image',
+                      'max_donation',
                       'show_likes', 'show_views', 'show_comments', 'views_count', 'likes_count', 'comments_count']
 
     class InputUpdateIdeaSerializer(serializers.ModelSerializer):
@@ -387,7 +388,7 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
             serializer_model=Profile,
             serializer_name="output_idea_comment_profile_serializer",
             model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
-                          'idea_count']
+                          'idea_count', 'profile_image']
         )()
 
         class Meta:
@@ -576,7 +577,7 @@ class IdeaFilterApi(APIView):
             serializer_model=Profile,
             serializer_name="output_idea_filter_profile_serializer",
             model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
-                          'idea_count']
+                          'idea_count', 'profile_image']
         )()
 
         class Meta:
@@ -628,8 +629,9 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
             serializer_model=Profile,
             serializer_name="output_user_idea_filter_profile_serializer",
             model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
-                          'idea_count']
+                          'idea_count', 'profile_image']
         )()
+
         class Meta:
             model = Idea
             fields = ['uuid', 'profile', 'title', 'goal', 'abstract', 'image', 'views_count', 'likes_count',
@@ -790,7 +792,15 @@ class SavedIdeaListApi(ApiAuthMixin, APIView):
             serializer_model=Idea,
             serializer_name="output_saved_idea_list_idea_serializer",
             model_fields=['uuid', 'profile', 'title', 'abstract', 'goal', 'image', 'views_count', 'likes_count',
-                          'comments_count']
+                          'comments_count'],
+            serializer_custom_fields={
+                "profile": inline_model_serializer(
+                    serializer_model=Profile,
+                    serializer_name="output_saved_ideas_profile_serializer",
+                    model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                                  'idea_count', 'profile_image']
+                )()
+            }
         )()
 
         class Meta:

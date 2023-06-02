@@ -42,11 +42,13 @@ def update_user_profile(*, profile: Profile, data: dict) -> Profile:
 
     if new_address and profile.address is not None:
         updated_address = update_model_instance(instance=profile.address, data=new_address)
+        data.pop('address')
 
     elif new_address and profile.address is None:
         address = Address.objects.create(**new_address)
         profile.address = address
         profile.save()
+        data.pop('address')
 
     updated_profile = update_model_instance(instance=profile, data=data)
     return updated_profile

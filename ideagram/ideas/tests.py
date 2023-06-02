@@ -2,7 +2,7 @@ from unittest import TestCase
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest
 from ideagram.profiles.models import Profile
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, create_collaboration_request
+    create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request
 
 
 class TestCreateIdea(TestCase):
@@ -307,6 +307,66 @@ class CollaborationRequestCreate(TestCase):
         is_exists = CollaborationRequest.objects.filter(pk=cr.pk).exists()
         self.assertTrue(is_exists)
         self.assertEqual(cr.idea.pk, self.idea.pk)
+
+
+class CollaborationRequestUpdate(TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=4)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        data = {
+          "title": "piano player",
+          "status": "full_time",
+          "skills": "reading note and 5 years experience about music & Piano",
+          "age": 25,
+          "education": "jazz music",
+          "description": "string",
+          "salary": 18000
+        }
+
+        self.cr = create_collaboration_request(idea=self.idea, data=data)
+
+    def test_update_cr(self):
+        title1 = self.cr.title
+        skills1 = self.cr.skills
+        age1 = self.cr.age
+        education1 = self.cr.education
+        salary1 = self.cr.salary
+
+        data2 = {
+          "title": "piano player and composer",
+          "status": "full_time",
+          "skills": "reading note and 5 years experience about music & Piano & violin",
+          "age": 30,
+          "education": "jazz music from new york music faculty",
+          "description": "string",
+          "salary": 30000
+        }
+
+        update_collaboration_request(collaboration_request=self.cr, data=data2)
+
+        self.assertNotEqual(title1, self.cr.title)
+        self.assertNotEqual(skills1, self.cr.skills)
+        self.assertNotEqual(age1, self.cr.age)
+        self.assertNotEqual(education1, self.cr.education)
+        self.assertNotEqual(salary1, self.cr.salary)
+
+
 
 
 

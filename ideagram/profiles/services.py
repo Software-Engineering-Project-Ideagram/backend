@@ -9,7 +9,7 @@ from .models import Profile, Following, ProfileLinks
 from .selectors import get_user_profile, get_profile_using_username
 from ..common.models import Address
 from ..common.utils import update_model_instance
-from ..emails.tasks import send_email_confirmation
+from ..emails.tasks import send_email_confirmation, send_email_password_confirmation
 from ..users.Exceptions import InvalidPassword
 
 BASE_USER = get_user_model()
@@ -129,5 +129,4 @@ def send_password_change_verification_code(*, username):
 
     cache.set(f"change_password__{username}", [validation_code.lower(), 0], 3*60)
 
-    send_email_confirmation.delay(user_id=user.id, username=profile.username, validation_code=validation_code)
-
+    send_email_password_confirmation.delay(user_id=user.id, username=profile.username, validation_code=validation_code)

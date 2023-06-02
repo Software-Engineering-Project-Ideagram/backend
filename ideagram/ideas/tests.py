@@ -1,7 +1,8 @@
-from unittest import TestCase
+from django.test import TestCase
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment, \
     IdeaLikes
 from ideagram.profiles.models import Profile
+from ideagram.users.models import BaseUser
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
     create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
     create_comment_for_idea, like_idea, unlike_idea
@@ -14,11 +15,17 @@ from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_
 class TestCreateIdea(TestCase):
 
     def test_create_idea(self):
-        profile = Profile.objects.get(pk=2)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        class_music = Classification.objects.create(title='music')
 
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "incomplete2",
             "goal": "release music",
@@ -52,17 +59,23 @@ class TestCreateIdea(TestCase):
 class TestIdeaUpdate(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=4)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user3", is_public=True, is_active=True,
+                                          is_banned=False)
+        self.class_music = Classification.objects.create(title='music')
+
         data = {
             "classification": [
-                2
+                self.class_music.pk
             ],
-            "title": "all eyes on you",
+            "title": "incomplete2",
             "goal": "release music",
-            "abstract": "my song",
-            "description": "artist: smash into pieces",
+            "abstract": "song about life",
+            "description": "artist: Backstreet Boys",
             "image": "",
-            "max_donation": 30000,
+            "max_donation": 27600,
             "show_likes": True,
             "show_views": True,
             "show_comments": True
@@ -79,7 +92,7 @@ class TestIdeaUpdate(TestCase):
 
         data = {
             "classification": [
-                2
+                self.class_music.pk
             ],
             "title": "get back",
             "goal": "remix music",
@@ -104,10 +117,15 @@ class TestIdeaUpdate(TestCase):
 class TestIdeaEvolutionStep(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=3)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "por kon piale Ra",
             "goal": "release music",
@@ -139,13 +157,18 @@ class TestIdeaEvolutionStep(TestCase):
         self.ev = ev_step
 
 
-
 class TestIdeaEvolutionUpdate(TestCase):
+
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=1)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                         is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "por kon piale Ra",
             "goal": "release music",
@@ -192,10 +215,15 @@ class TestIdeaEvolutionUpdate(TestCase):
 class TestFinancialStepCreate(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=1)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "por kon piale Ra",
             "goal": "release music",
@@ -228,10 +256,15 @@ class TestFinancialStepCreate(TestCase):
 class TestFinancialStepUpdate(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=1)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "por kon piale Ra",
             "goal": "release music",
@@ -280,10 +313,16 @@ class TestFinancialStepUpdate(TestCase):
 class CollaborationRequestCreate(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=3)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "I Will Survive",
             "goal": "release music. the best song of the century",
@@ -319,10 +358,16 @@ class CollaborationRequestCreate(TestCase):
 class CollaborationRequestUpdate(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=4)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "I Will Survive",
             "goal": "release music. the best song of the century",
@@ -336,7 +381,7 @@ class CollaborationRequestUpdate(TestCase):
         }
         self.idea = create_idea(profile=profile, data=data)
 
-        data = {
+        data2 = {
           "title": "piano player",
           "status": "full_time",
           "skills": "reading note and 5 years experience about music & Piano",
@@ -346,7 +391,7 @@ class CollaborationRequestUpdate(TestCase):
           "salary": 18000
         }
 
-        self.cr = create_collaboration_request(idea=self.idea, data=data)
+        self.cr = create_collaboration_request(idea=self.idea, data=data2)
 
     def test_update_cr(self):
         title1 = self.cr.title
@@ -377,10 +422,22 @@ class CollaborationRequestUpdate(TestCase):
 class CommentTest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=4)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        base_user2 = BaseUser.objects.create_user(email="user2@gmail.com", password="user", is_active=True,
+                                                  is_admin=False)
+
+        self.commenter = Profile.objects.create(user=base_user2, username="user2", is_public=True, is_active=True,
+                                                is_banned=False)
+
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "I Will Survive",
             "goal": "release music. the best song of the century",
@@ -400,23 +457,31 @@ class CommentTest(TestCase):
             "comment": "a good song from a prefect signer"
         }
 
-        commenter = Profile.objects.get(pk=1)
-        new_comment = create_comment_for_idea(idea=self.idea, profile=commenter, data=date)
+        new_comment = create_comment_for_idea(idea=self.idea, profile=self.commenter, data=date)
 
         is_exist = IdeaComment.objects.filter(pk=new_comment.pk).exists()
         self.assertTrue(is_exist)
 
         self.assertEqual(self.idea.pk, new_comment.idea.pk)
-        self.assertEqual(commenter.pk, new_comment.profile.pk)
+        self.assertEqual(self.commenter.pk, new_comment.profile.pk)
 
 
 class IdeaLikeTest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=4)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        base_user2 = BaseUser.objects.create_user(email="user2@gmail.com", password="user", is_active=True,
+                                                  is_admin=False)
+        self.liker = Profile.objects.create(user=base_user2, username="user2", is_public=True, is_active=True,
+                                                is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "I Will Survive",
             "goal": "release music. the best song of the century",
@@ -431,24 +496,32 @@ class IdeaLikeTest(TestCase):
         self.idea = create_idea(profile=profile, data=data)
 
     def test_idea_like(self):
-        like_profile = Profile.objects.get(pk=4)
 
-        like = like_idea(idea_uuid=self.idea, user_id=like_profile)
+        like = like_idea(idea_uuid=self.idea, user_id=self.liker)
 
         is_exist = IdeaLikes.objects.filter(pk=like.pk).exists()
         self.assertTrue(is_exist)
 
         self.assertEqual(self.idea.pk, like.idea_id.pk)
-        self.assertEqual(like_profile.pk, like.profile_id.pk)
+        self.assertEqual(self.liker.pk, like.profile_id.pk)
 
 
 class IdeaUnlikeTest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=3)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        base_user2 = BaseUser.objects.create_user(email="user2@gmail.com", password="user", is_active=True,
+                                                  is_admin=False)
+        self.liker = Profile.objects.create(user=base_user2, username="user2", is_public=True, is_active=True,
+                                                is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "I Will Survive",
             "goal": "release music. the best song of the century",
@@ -462,15 +535,14 @@ class IdeaUnlikeTest(TestCase):
         }
         self.idea = create_idea(profile=profile, data=data)
 
-        self.like_profile = Profile.objects.get(pk=4)
-        self.like = like_idea(idea_uuid=self.idea, user_id=self.like_profile)
+        self.like = like_idea(idea_uuid=self.idea, user_id=self.liker)
 
     def test_idea_unlike(self):
 
         is_exist = IdeaLikes.objects.filter(pk=self.like.pk).exists()
         self.assertTrue(is_exist)
 
-        unlike_idea(idea_uuid=self.idea.uuid, user=self.like_profile.user)
+        unlike_idea(idea_uuid=self.idea.uuid, user=self.liker.user)
 
         is_exist = IdeaLikes.objects.filter(pk=self.like.pk).exists()
         self.assertFalse(is_exist)
@@ -479,11 +551,15 @@ class IdeaUnlikeTest(TestCase):
 class SelectIdeaTest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=2)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
 
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "incomplete2",
             "goal": "release music",
@@ -506,10 +582,14 @@ class SelectIdeaTest(TestCase):
 class SelectEvolutionaryStepTest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=3)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "por kon piale Ra",
             "goal": "release music",
@@ -546,10 +626,14 @@ class SelectEvolutionaryStepTest(TestCase):
 class SelectFinancialStepTest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=1)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "por kon piale Ra",
             "goal": "release music",
@@ -585,17 +669,21 @@ class SelectFinancialStepTest(TestCase):
 class SelectCollaborationRequest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=4)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
-            "title": "I Will Survive",
-            "goal": "release music. the best song of the century",
+            "title": "por kon piale Ra",
+            "goal": "release music",
             "abstract": "a song. Classic & Cultural",
-            "description": "artist: Gloria Gaynor",
+            "description": "artist: Mohammad Reza Shajarian",
             "image": "",
-            "max_donation": 30000,
+            "max_donation": 27000,
             "show_likes": True,
             "show_views": True,
             "show_comments": True
@@ -626,10 +714,20 @@ class SelectCollaborationRequest(TestCase):
 class SelectIdeaCommentTest(TestCase):
 
     def setUp(self) -> None:
-        profile = Profile.objects.get(pk=4)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        base_user2 = BaseUser.objects.create_user(email="user2@gmail.com", password="user", is_active=True,
+                                                  is_admin=False)
+        self.commenter = Profile.objects.create(user=base_user2, username="user2", is_public=True, is_active=True,
+                                                is_banned=False)
+
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "I Will Survive",
             "goal": "release music. the best song of the century",
@@ -647,8 +745,7 @@ class SelectIdeaCommentTest(TestCase):
             "comment": "a good song from a prefect signer"
         }
 
-        commenter = Profile.objects.get(pk=1)
-        self.new_comment = create_comment_for_idea(idea=self.idea, profile=commenter, data=date)
+        self.new_comment = create_comment_for_idea(idea=self.idea, profile=self.commenter, data=date)
 
     def test_comment_by_idea(self):
         comment = get_ideas_comment(idea=self.idea).first()
@@ -658,10 +755,20 @@ class SelectIdeaCommentTest(TestCase):
 class SelectIdeaLikesTest(TestCase):
 
     def setUp(self) -> None:
-        self.profile = Profile.objects.get(pk=3)
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        self.profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        base_user2 = BaseUser.objects.create_user(email="user2@gmail.com", password="user", is_active=True,
+                                                  is_admin=False)
+        self.liker = Profile.objects.create(user=base_user2, username="user2", is_public=True, is_active=True,
+                                                is_banned=False)
+
+        class_music = Classification.objects.create(title='music')
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "I Will Survive",
             "goal": "release music. the best song of the century",
@@ -674,21 +781,9 @@ class SelectIdeaLikesTest(TestCase):
             "show_comments": True
         }
         self.idea = create_idea(profile=self.profile, data=data)
-
-        self.like_profile = Profile.objects.get(pk=4)
-        self.like = like_idea(idea_uuid=self.idea, user_id=self.like_profile)
+        self.like = like_idea(idea_uuid=self.idea, user_id=self.liker)
 
     def test_like_by_idea(self):
-        like = get_idea_likes(idea_uuid=self.idea.pk, user=self.like_profile).first()
+        like = get_idea_likes(idea_uuid=self.idea.pk, user=self.liker).first()
         self.assertEqual(like, self.like)
-
-
-
-
-
-
-
-
-
-
 

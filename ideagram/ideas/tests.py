@@ -579,46 +579,50 @@ class SelectIdeaTest(TestCase):
         self.assertEqual(self.idea.pk, idea_result.pk)
 
 
-# class SelectEvolutionaryStepTest(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=3)
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "por kon piale Ra",
-#             "goal": "release music",
-#             "abstract": "a song. Classic & Cultural",
-#             "description": "artist: Mohammad Reza Shajarian",
-#             "image": "",
-#             "max_donation": 27000,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#         idea = Idea.objects.get(pk=self.idea.pk)
-#
-#         data = {
-#             "title": "write Notes",
-#             "finish_date": "2023-07-02",
-#             "description": "our song writer will write notes and give it to the orchestra",
-#             "priority": 1
-#         }
-#
-#         self.ev = create_evolution_step(idea=idea, evolution_data=data)
-#
-#     def test_ev_by_uuid(self):
-#         ev = get_evolutionary_step_by_uuid(uuid=self.ev.uuid)
-#         self.assertEqual(ev, self.ev)
-#
-#     def test_ev_by_idea(self):
-#         ev = get_idea_evolutionary_steps(idea=self.idea).first()
-#         self.assertEqual(ev, self.ev)
-#
-#
+class SelectEvolutionaryStepTest(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "por kon piale Ra",
+            "goal": "release music",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Mohammad Reza Shajarian",
+            "image": "",
+            "max_donation": 27000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        idea = Idea.objects.get(pk=self.idea.pk)
+
+        data = {
+            "title": "write Notes",
+            "finish_date": "2023-07-02",
+            "description": "our song writer will write notes and give it to the orchestra",
+            "priority": 1
+        }
+
+        self.ev = create_evolution_step(idea=idea, evolution_data=data)
+
+    def test_ev_by_uuid(self):
+        ev = get_evolutionary_step_by_uuid(uuid=self.ev.uuid)
+        self.assertEqual(ev, self.ev)
+
+    def test_ev_by_idea(self):
+        ev = get_idea_evolutionary_steps(idea=self.idea).first()
+        self.assertEqual(ev, self.ev)
+
+
 # class SelectFinancialStepTest(TestCase):
 #
 #     def setUp(self) -> None:

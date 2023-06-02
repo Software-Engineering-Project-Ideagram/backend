@@ -1,36 +1,45 @@
 import unittest
-from models import Idea, Classification
-from ..profiles.models import Profile
+from ideagram.ideas.models import Classification, Idea
+from ideagram.profiles.models import Profile
+from ideagram.ideas.services import create_idea
 
 
-class IdeaTest(unittest.TestCase):
+class TestIdea(unittest.TestCase):
 
-    def setUp(self) -> None:
+    def test_create_idea(self):
         profile = Profile.objects.get(pk=2)
 
         data = {
-          "classification": [
-            "music"
-          ],
-          "title": "dream on",
-          "goal": "release music",
-          "abstract": "i wrote this song.i have more money to release this.",
-          "description": "",
-          "image": "",
-          "max_donation": 2147483647,
-          "show_likes": True,
-          "show_views": True,
-          "show_comments": True
+            "classification": [
+                2
+            ],
+            "title": "incomplete2",
+            "goal": "release music",
+            "abstract": "song about life",
+            "description": "artist: Backstreet Boys",
+            "image": "",
+            "max_donation": 27600,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
         }
 
+        new_idea = create_idea(profile=profile, data=data)
 
+        new_idea_exists = Idea.objects.filter(title='incomplete').exists()
+        self.assertTrue(new_idea_exists)
 
+        self.assertEqual(new_idea.title, 'incomplete2')
+        self.assertEqual(new_idea.goal, "release music")
+        self.assertEqual(new_idea.description, "artist: Backstreet Boys")
+        self.assertEqual(new_idea.abstract, "song about life")
+        self.assertEqual(new_idea.max_donation, 27600)
 
+        self.assertTrue(new_idea.show_likes)
+        self.assertTrue(new_idea.show_views)
+        self.assertTrue(new_idea.show_comments)
 
-
-
-    def test_something(self):
-        self.assertEqual(True, False)  # add assertion here
+        self.assertEqual(profile.pk, new_idea.profile_id)
 
 
 if __name__ == '__main__':

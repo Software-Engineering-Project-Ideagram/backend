@@ -1,7 +1,7 @@
 from unittest import TestCase
 from ideagram.ideas.models import Classification, Idea, EvolutionStep
 from ideagram.profiles.models import Profile
-from ideagram.ideas.services import create_idea, update_idea, create_evolution_step
+from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step
 
 
 class TestCreateIdea(TestCase):
@@ -128,6 +128,57 @@ class TestIdeaEvolutionStep(TestCase):
 
         is_exists = EvolutionStep.objects.filter(pk=ev_step.pk).exists()
         self.assertTrue(is_exists)
+
+        self.ev = ev_step
+
+
+class TestIdeaEvolutionUpdate(TestCase):
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=1)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "por kon piale Ra",
+            "goal": "release music",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Mohammad Reza Shajarian",
+            "image": "",
+            "max_donation": 27000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        ev_data = {
+            "title": "write Notes from my heart",
+            "finish_date": "2023-08-13",
+            "description": "there is nothing to say.",
+            "priority": 1
+        }
+
+        self.ev = create_evolution_step(idea=self.idea, evolution_data=ev_data)
+
+    def test_update_ev(self):
+        title1 = self.ev.title
+        finish_date1 = self.ev.finish_date
+        description1 = self.ev.description
+        priority1 = self.ev.priority
+
+        data = {
+            "title": "write new Notes with sponsor",
+            "finish_date": "2023-08-22",
+            "description": "our song writer will write notes and give it to my orchestra",
+            "priority": 2
+        }
+
+        update_evolutionary_step(data=data, evolutionary_step=self.ev)
+
+        self.assertNotEqual(title1, self.ev.title)
+        self.assertNotEqual(finish_date1, self.ev.finish_date)
+        self.assertNotEqual(description1, self.ev.description)
+        self.assertNotEqual(priority1, self.ev.priority)
 
 
 

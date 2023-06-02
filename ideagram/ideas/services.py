@@ -6,9 +6,11 @@ from ideagram.common.models import ForbiddenWord
 from ideagram.common.utils import update_model_instance
 
 from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile, IdeaLikes, OfficialInformation
+    IdeaAttachmentFile, IdeaLikes, OfficialInformation, SavedIdea
+from ideagram.ideas.selectors import get_idea_by_uuid
 
 from ideagram.profiles.models import Profile
+from ideagram.profiles.selectors import get_user_profile
 
 
 def is_forbidden_word_exists(*, text: str) -> bool:
@@ -126,3 +128,21 @@ def create_official_information(*, idea: Idea, information_data: dict) -> Offici
 def update_official_information(*, official_information: OfficialInformation, data: dict) -> OfficialInformation:
     updated_info = update_model_instance(instance=official_information, data=data)
     return updated_info
+
+
+
+@transaction.atomic
+def add_idea_to_save_list(*, user, idea_uuid) -> Idea:
+    profile = get_user_profile(user=user)
+    idea = get_idea_by_uuid(uuid=idea_uuid)
+
+    if not idea:
+        raise ValueError("Invalid idea uuid")
+
+    try:
+        SavedIdea.objects.create(profile=profile, idea=idea)
+    except IntegrityError:
+        return None
+
+    return idea
+

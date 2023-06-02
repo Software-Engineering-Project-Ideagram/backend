@@ -10,19 +10,20 @@ from ideagram.common.utils import inline_serializer, inline_model_serializer
 
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, \
     IdeaComment, \
-    IdeaAttachmentFile, Organization, OfficialInformation
+    IdeaAttachmentFile, Organization, OfficialInformation, SavedIdea
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, \
     get_ideas_comment, \
     get_idea_attachments, get_attachment_by_uuid, filter_ideas, get_collaboration_request_by_uuid, \
-    get_idea_collaboration_request, user_filter_ideas, get_official_information, get_official_information_by_uuid
+    get_idea_collaboration_request, user_filter_ideas, get_official_information, get_official_information_by_uuid, \
+    get_profile_saved_idea
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
     create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, \
     update_collaboration_request, \
     create_comment_for_idea, add_attachment_file, is_forbidden_word_exists, create_official_information, \
-    update_official_information
+    update_official_information, add_idea_to_save_list
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -727,3 +728,45 @@ class IdeaOfficialInformationDetailApi(ActiveProfileMixin, APIView):
 
         info.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+# ===============================================================================================
+
+
+class SaveIdeaApi(ApiAuthMixin, APIView):
+
+    @extend_schema(tags=['Saved Ideas'])
+    def post(self, request, idea_uuid):
+        try:
+            idea = add_idea_to_save_list(user=request.user, idea_uuid=idea_uuid)
+        except ValueError:
+            return Response("Invalid idea uuid", status=status.HTTP_400_BAD_REQUEST)
+
+        if idea is None:
+            return Response("This idea is already saved", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class SavedIdeaListApi(ApiAuthMixin, APIView):
+    class OutputSavedIdeaSerializer(serializers.ModelSerializer):
+        idea = inline_model_serializer(
+            serializer_model=Idea,
+            serializer_name="output_saved_idea_list_idea_serializer",
+            model_fields=['uuid', 'profile', 'title', 'abstract', 'goal', 'image', 'views_count', 'likes_count',
+                      'comments_count']
+        )
+
+        class Meta:
+            model = SavedIdea
+            fields =['idea', 'date']
+
+
+    @extend_schema(responses=OutputSavedIdeaSerializer(many=True), tags=['Saved Ideas'])
+    def get(self, request):
+        profile = get_user_profile(user=request.user)
+        saved_ideas = get_profile_saved_idea(profile=profile)
+        serializer = self.OutputSavedIdeaSerializer(instance=saved_ideas, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+

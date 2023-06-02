@@ -6,7 +6,7 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
     create_comment_for_idea, like_idea, unlike_idea
 
-from ideagram.ideas.selectors import get_idea_by_uuid
+from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid
 
 
 class TestCreateIdea(TestCase):
@@ -135,6 +135,7 @@ class TestIdeaEvolutionStep(TestCase):
         self.assertTrue(is_exists)
 
         self.ev = ev_step
+
 
 
 class TestIdeaEvolutionUpdate(TestCase):
@@ -498,6 +499,42 @@ class SelectIdeaTest(TestCase):
     def test_get_idea_by_uuid(self):
         idea_result = get_idea_by_uuid(uuid=self.idea.uuid)
         self.assertEqual(self.idea.pk, idea_result.pk)
+
+
+class SelectEvolutionaryStepTest(TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=3)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "por kon piale Ra",
+            "goal": "release music",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Mohammad Reza Shajarian",
+            "image": "",
+            "max_donation": 27000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        idea = Idea.objects.get(pk=self.idea.pk)
+
+        data = {
+            "title": "write Notes",
+            "finish_date": "2023-07-02",
+            "description": "our song writer will write notes and give it to the orchestra",
+            "priority": 1
+        }
+
+        self.ev = create_evolution_step(idea=idea, evolution_data=data)
+
+    def test_ev_by_uuid(self):
+        ev = get_evolutionary_step_by_uuid(uuid=self.ev.uuid)
+        self.assertEqual(ev, self.ev)
 
 
 

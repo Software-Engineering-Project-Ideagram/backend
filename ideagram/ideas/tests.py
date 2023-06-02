@@ -7,7 +7,7 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     create_comment_for_idea, like_idea, unlike_idea
 
 from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid, get_idea_financial_steps, \
-    get_financial_step_by_uuid
+    get_financial_step_by_uuid, get_idea_evolutionary_steps
 
 
 class TestCreateIdea(TestCase):
@@ -535,6 +535,10 @@ class SelectEvolutionaryStepTest(TestCase):
 
     def test_ev_by_uuid(self):
         ev = get_evolutionary_step_by_uuid(uuid=self.ev.uuid)
+        self.assertEqual(ev, self.ev)
+
+    def test_ev_by_idea(self):
+        ev = get_idea_evolutionary_steps(idea=self.idea).first()
         self.assertEqual(ev, self.ev)
 
 

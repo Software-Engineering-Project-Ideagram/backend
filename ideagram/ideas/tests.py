@@ -666,47 +666,51 @@ class SelectFinancialStepTest(TestCase):
         self.assertEqual(fs, self.fs)
 
 
-# class SelectCollaborationRequest(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=4)
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "I Will Survive",
-#             "goal": "release music. the best song of the century",
-#             "abstract": "a song. Classic & Cultural",
-#             "description": "artist: Gloria Gaynor",
-#             "image": "",
-#             "max_donation": 30000,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#         data = {
-#             "title": "piano player",
-#             "status": "full_time",
-#             "skills": "reading note and 5 years experience about music & Piano",
-#             "age": 25,
-#             "education": "jazz music",
-#             "description": "string",
-#             "salary": 18000
-#         }
-#
-#         self.cr = create_collaboration_request(idea=self.idea, data=data)
-#
-#     def test_cr_by_uuid(self):
-#         cr = get_collaboration_request_by_uuid(uuid=self.cr.uuid)
-#         self.assertEqual(cr, self.cr)
-#
-#     def test_cr_by_idea(self):
-#         cr = get_idea_collaboration_request(idea=self.idea).first()
-#         self.assertEqual(cr, self.cr)
-#
-#
+class SelectCollaborationRequest(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "por kon piale Ra",
+            "goal": "release music",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Mohammad Reza Shajarian",
+            "image": "",
+            "max_donation": 27000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        data = {
+            "title": "piano player",
+            "status": "full_time",
+            "skills": "reading note and 5 years experience about music & Piano",
+            "age": 25,
+            "education": "jazz music",
+            "description": "string",
+            "salary": 18000
+        }
+
+        self.cr = create_collaboration_request(idea=self.idea, data=data)
+
+    def test_cr_by_uuid(self):
+        cr = get_collaboration_request_by_uuid(uuid=self.cr.uuid)
+        self.assertEqual(cr, self.cr)
+
+    def test_cr_by_idea(self):
+        cr = get_idea_collaboration_request(idea=self.idea).first()
+        self.assertEqual(cr, self.cr)
+
+
 # class SelectIdeaCommentTest(TestCase):
 #
 #     def setUp(self) -> None:

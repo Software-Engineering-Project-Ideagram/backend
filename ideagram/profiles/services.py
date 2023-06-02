@@ -55,9 +55,19 @@ def update_user_profile(*, profile: Profile, data: dict) -> Profile:
 @transaction.atomic
 def follow_profile(*, user, following_username):
     following = Profile.objects.get(username=following_username)
+    follower = get_user_profile(user=user)
 
-    Following.objects.create(profile=get_user_profile(user=user), profile_following=following)
+    temp = Following.objects.filter(profile=follower, profile_following=following)
 
+    if temp.exists():
+        raise ValueError("These profiles already followed each other")
+
+    Following.objects.create(profile=follower, profile_following=following)
+
+    follower.following_count += 1
+    following.follower_count += 1
+    follower.save()
+    following.save()
 
 
 @transaction.atomic

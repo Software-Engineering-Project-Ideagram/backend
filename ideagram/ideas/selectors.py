@@ -1,7 +1,7 @@
 from django.db.models import QuerySet
 
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile, IdeaLikes
+    IdeaAttachmentFile, IdeaLikes, OfficialInformation
 from ideagram.profiles.models import Profile
 from ideagram.profiles.selectors import get_user_profile
 
@@ -137,3 +137,19 @@ def user_filter_ideas(
 
     return Idea.objects.filter(**search_params).order_by(f"-{sort_by}")
 
+
+def get_official_information(*, idea: Idea) -> QuerySet(OfficialInformation):
+    info = OfficialInformation.objects.filter(idea=idea)
+    return info
+
+
+def get_official_information_by_uuid(*, uuid: str, user: BaseUser = None) -> OfficialInformation | None:
+    if user:
+        info = OfficialInformation.objects.filter(uuid=uuid, idea__profile__user=user)
+    else:
+        info = OfficialInformation.objects.filter(uuid=uuid)
+
+    if info.exists():
+        return info.first()
+    else:
+        return None

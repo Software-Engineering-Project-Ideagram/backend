@@ -262,5 +262,5 @@ class FollowProfileApi(ActiveProfileMixin, APIView):
         try:
             follow_profile(user=request.user, following_username=following_username)
             return Response(status=status.HTTP_201_CREATED)
-        except Profile.DoesNotExist:
+        except (Profile.DoesNotExist, ValueError):
             return Response(status=status.HTTP_404_NOT_FOUND)

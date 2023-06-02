@@ -123,3 +123,9 @@ class IdeaAttachmentFile(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
+class OfficialInformation(models.Model):
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    register_number = models.CharField(max_length=10)
+    description = models.CharField(max_length=500)

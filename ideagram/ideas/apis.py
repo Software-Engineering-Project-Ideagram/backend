@@ -10,18 +10,19 @@ from ideagram.common.utils import inline_serializer, inline_model_serializer
 
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, \
     IdeaComment, \
-    IdeaAttachmentFile, Organization
+    IdeaAttachmentFile, Organization, OfficialInformation
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, \
     get_ideas_comment, \
     get_idea_attachments, get_attachment_by_uuid, filter_ideas, get_collaboration_request_by_uuid, \
-    get_idea_collaboration_request, user_filter_ideas
+    get_idea_collaboration_request, user_filter_ideas, get_official_information, get_official_information_by_uuid
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
     create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, \
     update_collaboration_request, \
-    create_comment_for_idea, add_attachment_file, is_forbidden_word_exists
+    create_comment_for_idea, add_attachment_file, is_forbidden_word_exists, create_official_information, \
+    update_official_information
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -621,3 +622,108 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
 
         output_serializer = self.OutputUserIdeaFilterSerializer(instance=ideas, many=True)
         return Response(data=output_serializer.data, status=status.HTTP_200_OK)
+
+
+# ===============================================================================================
+
+
+class IdeaOfficialInformationApi(ActiveProfileMixin, APIView):
+    class InputCreateOfficialInformationSerializer(serializers.ModelSerializer):
+
+        class Meta:
+            model = OfficialInformation
+            fields = ['organization', 'register_number', 'description']
+
+    class OutputCreateOfficialInformationSerializer(serializers.ModelSerializer):
+        idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
+        organization = inline_model_serializer(
+            serializer_model=Organization,
+            serializer_name="output_official_information_organization",
+            model_fields="__all__"
+        )
+
+        class Meta:
+            model = OfficialInformation
+            fields = ['uuid', 'idea', 'organization', 'register_number', 'description']
+
+
+    @extend_schema(responses=OutputCreateOfficialInformationSerializer(many=True), tags=['Official Information'])
+    def get(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        info = get_official_information(idea=idea)
+        serializer = self.OutputCreateOfficialInformationSerializer(instance=info, many=True)
+        return Response(data=serializer.data)
+
+    @extend_schema(request=InputCreateOfficialInformationSerializer(many=True),
+                   responses=OutputCreateOfficialInformationSerializer(many=True),
+                   tags=['Official Information'])
+    def post(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid, user=request.user)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.InputCreateOfficialInformationSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        created_info = []
+
+        for data in serializer.validated_data:
+            info = create_official_information(idea=idea, information_data=data)
+            if info:
+                created_info.append(info)
+            else:
+                return Response(
+                    f"You have reached maximum number of official information",
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        output_serializer = self.OutputCreateOfficialInformationSerializer(instance=created_info, many=True)
+        return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class IdeaOfficialInformationDetailApi(ActiveProfileMixin, APIView):
+    class InputUpdateOfficialInformationSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = OfficialInformation
+            optional_fields = ['organization', 'register_number', 'description']
+            required_fields = []
+            fields = [*optional_fields, *required_fields]
+            extra_kwargs = dict((x, {'required': False}) for x in optional_fields)
+
+    class OutputOfficialInformationDetailSerializer(serializers.ModelSerializer):
+        idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
+        organization = inline_model_serializer(
+            serializer_model=Organization,
+            serializer_name="output_official_information_detail_organization",
+            model_fields="__all__"
+        )
+        class Meta:
+            model = OfficialInformation
+            fields = ['uuid', 'idea', 'organization', 'register_number', 'description']
+
+    @extend_schema(request=InputUpdateOfficialInformationSerializer,
+                   responses=OutputOfficialInformationDetailSerializer,
+                   tags=['Official Information'])
+    def put(self, request, information_uuid):
+        serializer = self.InputUpdateOfficialInformationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        info = get_official_information_by_uuid(uuid=information_uuid, user=request.user)
+        if not info:
+            return Response("No official information found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        updated_info = update_official_information(official_information=info, data=serializer.validated_data)
+        output_serializer = self.OutputOfficialInformationDetailSerializer(instance=updated_info)
+        return Response(data=output_serializer.data)
+
+    @extend_schema(tags=['Official Information'])
+    def delete(self, request, information_uuid):
+
+        info = get_official_information_by_uuid(uuid=information_uuid, user=request.user)
+        if not info:
+            return Response("No official information found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        info.delete()
+        return Response(status=status.HTTP_200_OK)

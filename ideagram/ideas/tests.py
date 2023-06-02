@@ -8,7 +8,7 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
 
 from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid, get_idea_financial_steps, \
     get_financial_step_by_uuid, get_idea_evolutionary_steps, get_ideas_comment, get_collaboration_request_by_uuid, \
-    get_idea_collaboration_request
+    get_idea_collaboration_request, get_idea_likes
 
 
 class TestCreateIdea(TestCase):
@@ -655,7 +655,32 @@ class SelectIdeaCommentTest(TestCase):
         self.assertEqual(comment, self.new_comment)
 
 
+class SelectIdeaLikesTest(TestCase):
 
+    def setUp(self) -> None:
+        self.profile = Profile.objects.get(pk=3)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=self.profile, data=data)
+
+        self.like_profile = Profile.objects.get(pk=4)
+        self.like = like_idea(idea_uuid=self.idea, user_id=self.like_profile)
+
+    def test_like_by_idea(self):
+        like = get_idea_likes(idea_uuid=self.idea.pk, user=self.like_profile).first()
+        self.assertEqual(like, self.like)
 
 
 

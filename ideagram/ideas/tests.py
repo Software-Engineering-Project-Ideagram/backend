@@ -7,7 +7,8 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     create_comment_for_idea, like_idea, unlike_idea
 
 from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid, get_idea_financial_steps, \
-    get_financial_step_by_uuid, get_idea_evolutionary_steps, get_ideas_comment
+    get_financial_step_by_uuid, get_idea_evolutionary_steps, get_ideas_comment, get_collaboration_request_by_uuid, \
+    get_idea_collaboration_request
 
 
 class TestCreateIdea(TestCase):
@@ -579,6 +580,43 @@ class SelectFinancialStepTest(TestCase):
     def test_fs_by_uuid(self):
         fs = get_financial_step_by_uuid(uuid=self.fs.uuid)
         self.assertEqual(fs, self.fs)
+
+
+class SelectCollaborationRequest(TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=4)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        data = {
+            "title": "piano player",
+            "status": "full_time",
+            "skills": "reading note and 5 years experience about music & Piano",
+            "age": 25,
+            "education": "jazz music",
+            "description": "string",
+            "salary": 18000
+        }
+
+        self.cr = create_collaboration_request(idea=self.idea, data=data)
+
+    def test_cr_by_uuid(self):
+        cr = get_collaboration_request_by_uuid(uuid=self.cr.uuid)
+        self.assertEqual(cr, self.cr)
 
 
 class SelectIdeaCommentTest(TestCase):

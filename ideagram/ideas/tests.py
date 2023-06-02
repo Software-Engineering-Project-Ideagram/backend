@@ -6,7 +6,7 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     create_financial_step, update_financial_step, create_collaboration_request, update_collaboration_request, \
     create_comment_for_idea, like_idea, unlike_idea
 
-from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid
+from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_uuid, get_idea_financial_steps
 
 
 class TestCreateIdea(TestCase):
@@ -535,6 +535,42 @@ class SelectEvolutionaryStepTest(TestCase):
     def test_ev_by_uuid(self):
         ev = get_evolutionary_step_by_uuid(uuid=self.ev.uuid)
         self.assertEqual(ev, self.ev)
+
+
+class SelectFinancialStepTest(TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=1)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "por kon piale Ra",
+            "goal": "release music",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Mohammad Reza Shajarian",
+            "image": "",
+            "max_donation": 27000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        data2 = {
+            "title": "Buying a violin",
+            "cost": 50000000,
+            "description": "requirements of group.",
+            "priority": 2,
+            "unit": "rial"
+          }
+
+        self.fs = create_financial_step(idea=self.idea, financial_data=data2)
+
+    def test_fs_by_idea(self):
+        fs = get_idea_financial_steps(idea=self.idea)
+        self.assertEqual(self.fs, fs.first())
+
 
 
 

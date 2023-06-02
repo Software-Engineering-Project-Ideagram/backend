@@ -1,4 +1,4 @@
-from unittest import TestCase
+from django.test import TestCase
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, CollaborationRequest, IdeaComment, \
     IdeaLikes
 from ideagram.profiles.models import Profile
@@ -15,15 +15,17 @@ from ideagram.ideas.selectors import get_idea_by_uuid, get_evolutionary_step_by_
 class TestCreateIdea(TestCase):
 
     def test_create_idea(self):
-        baseuser1 = BaseUser.objects.create_user(email="user1@gmail.com",
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
                                                  password="user",
                                                  is_active=True, is_admin=False)
-        profile = Profile.objects.create(user=baseuser1, username="user1", is_public=True, is_active=True,
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
                                           is_banned=False)
+
+        class_music = Classification.objects.create(title='music')
 
         data = {
             "classification": [
-                2
+                class_music.pk
             ],
             "title": "incomplete2",
             "goal": "release music",
@@ -57,7 +59,11 @@ class TestCreateIdea(TestCase):
 # class TestIdeaUpdate(TestCase):
 #
 #     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=4)
+#         base_user = BaseUser.objects.create_user(email="user3@gmail.com",
+#                                                  password="user",
+#                                                  is_active=True, is_admin=False)
+#         profile = Profile.objects.create(user=base_user, username="user3", is_public=True, is_active=True,
+#                                           is_banned=False)
 #         data = {
 #             "classification": [
 #                 2
@@ -104,8 +110,8 @@ class TestCreateIdea(TestCase):
 #         self.assertNotEqual(abstract1, idea.abstract)
 #         self.assertNotEqual(description1, idea.description)
 #         self.assertNotEqual(max_donation1, idea.max_donation)
-#
-#
+
+
 # class TestIdeaEvolutionStep(TestCase):
 #
 #     def setUp(self) -> None:

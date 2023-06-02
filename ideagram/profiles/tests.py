@@ -137,3 +137,33 @@ class UpdateProfileTest(TestCase):
         link = add_social_media_to_profile(profile=profile, data=data)
         with self.assertRaises(ValidationError):
             link = add_social_media_to_profile(profile=profile, data=data)
+
+
+class ProfileTest(TestCase):
+    def setUp(self):
+        baseuser1 = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+
+        baseuser2 = BaseUser.objects.create_user(email="user2@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+
+        baseuser1.is_email_verified = True
+        baseuser2.is_email_verified = True
+
+        baseuser1.save()
+        baseuser2.save()
+
+        profile1 = Profile.objects.create(user=baseuser1, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        profile2 = Profile.objects.create(user=baseuser2, username="user2", is_public=True, is_active=True,
+                                          is_banned=True)
+
+    def test_is_visible(self):
+        baseuser1=BaseUser.objects.get(email="user1@gmail.com")
+        baseuser2=BaseUser.objects.get(email="user2@gmail.com")
+        profile1=Profile.objects.get(user=baseuser1, username="user1")
+        profile2=Profile.objects.get(user=baseuser2, username="user2")
+        self.assertTrue(profile1.is_visible)
+        self.assertFalse(profile2.is_visible)

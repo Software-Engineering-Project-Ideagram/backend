@@ -1,7 +1,7 @@
 import unittest
 from ideagram.ideas.models import Classification, Idea
 from ideagram.profiles.models import Profile
-from ideagram.ideas.services import create_idea
+from ideagram.ideas.services import create_idea, update_idea
 
 
 class TestIdea(unittest.TestCase):
@@ -40,6 +40,58 @@ class TestIdea(unittest.TestCase):
         self.assertTrue(new_idea.show_comments)
 
         self.assertEqual(profile.pk, new_idea.profile_id)
+
+
+class TestIdeaUpdate(unittest.TestCase):
+
+    def setUp(self) -> None:
+        profile = Profile.objects.get(pk=4)
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "all eyes on you",
+            "goal": "release music",
+            "abstract": "my song",
+            "description": "artist: smash into pieces",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        create_idea(profile=profile, data=data)
+
+    def test_update_idea(self):
+        idea = Idea.objects.get(title="all eyes on you")
+        title1 = idea.title
+        goal1 = idea.goal
+        abstract1 = idea.abstract
+        description1 = idea.description
+        max_donation1 = idea.max_donation
+
+        data = {
+            "classification": [
+                2
+            ],
+            "title": "get back",
+            "goal": "remix music",
+            "abstract": "my song, my life",
+            "description": "artist: Nine Assets",
+            "image": "",
+            "max_donation": 16000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+
+        update_idea(idea=idea, data=data)
+
+        self.assertNotEqual(title1, idea.title)
+        self.assertNotEqual(goal1, idea.goal)
+        self.assertNotEqual(abstract1, idea.abstract)
+        self.assertNotEqual(description1, idea.description)
+        self.assertNotEqual(max_donation1, idea.max_donation)
 
 
 if __name__ == '__main__':

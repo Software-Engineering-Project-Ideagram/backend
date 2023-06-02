@@ -71,3 +71,14 @@ class ReportsTest(TestCase):
         }
         with self.assertRaises(ValueError):
             idea_report = create_idea_report(reporter=reporter_profile, data=data)
+
+    def test_exist_idea_to_create_idea_report(self):
+        idea = Idea.objects.get(title="music for a album")
+        reporter_profile = Profile.objects.get(username="user1")
+        data = {
+            "idea": idea.uuid
+        }
+        idea_report = create_idea_report(reporter=reporter_profile, data=data)
+        self.assertEqual(idea_report.reporter.username, reporter_profile.username)
+        self.assertEqual(idea_report.idea.title, idea.title)
+        self.assertEqual(idea_report.idea.uuid, idea.uuid)

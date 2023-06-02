@@ -215,6 +215,7 @@ class TestFinancialStepCreate(TestCase):
 
         is_exists = FinancialStep.objects.filter(pk=fs_step.pk).exists()
         self.assertTrue(is_exists)
+        self.assertEqual(fs_step.idea.pk, self.idea.pk)
 
 
 class TestFinancialStepUpdate(TestCase):

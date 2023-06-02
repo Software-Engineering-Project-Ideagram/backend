@@ -623,45 +623,49 @@ class SelectEvolutionaryStepTest(TestCase):
         self.assertEqual(ev, self.ev)
 
 
-# class SelectFinancialStepTest(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=1)
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "por kon piale Ra",
-#             "goal": "release music",
-#             "abstract": "a song. Classic & Cultural",
-#             "description": "artist: Mohammad Reza Shajarian",
-#             "image": "",
-#             "max_donation": 27000,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#         data2 = {
-#             "title": "Buying a violin",
-#             "cost": 50000000,
-#             "description": "requirements of group.",
-#             "priority": 2,
-#             "unit": "rial"
-#           }
-#
-#         self.fs = create_financial_step(idea=self.idea, financial_data=data2)
-#
-#     def test_fs_by_idea(self):
-#         fs = get_idea_financial_steps(idea=self.idea)
-#         self.assertEqual(self.fs, fs.first())
-#
-#     def test_fs_by_uuid(self):
-#         fs = get_financial_step_by_uuid(uuid=self.fs.uuid)
-#         self.assertEqual(fs, self.fs)
-#
-#
+class SelectFinancialStepTest(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "por kon piale Ra",
+            "goal": "release music",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Mohammad Reza Shajarian",
+            "image": "",
+            "max_donation": 27000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        data2 = {
+            "title": "Buying a violin",
+            "cost": 50000000,
+            "description": "requirements of group.",
+            "priority": 2,
+            "unit": "rial"
+          }
+
+        self.fs = create_financial_step(idea=self.idea, financial_data=data2)
+
+    def test_fs_by_idea(self):
+        fs = get_idea_financial_steps(idea=self.idea)
+        self.assertEqual(self.fs, fs.first())
+
+    def test_fs_by_uuid(self):
+        fs = get_financial_step_by_uuid(uuid=self.fs.uuid)
+        self.assertEqual(fs, self.fs)
+
+
 # class SelectCollaborationRequest(TestCase):
 #
 #     def setUp(self) -> None:

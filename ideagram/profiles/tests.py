@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from ideagram.profiles.models import Profile, Following
@@ -74,3 +75,6 @@ class UserTest(TestCase):
        self.assertEqual(str(type(user1)),"<class 'ideagram.users.models.BaseUser'>")
        with self.assertRaises(ValueError):
            user2 = register(username="user2", email="", password="user1password")
+
+       with self.assertRaises(ValidationError):
+           user2 = register(username="user1", email="user2@gmail.com", password="user1password")

@@ -11,6 +11,15 @@ def get_user_profile(*, user: BASE_USER) -> Profile:
     return Profile.objects.get(user=user)
 
 
+
+def get_general_user_profile(*, username: str) -> Profile | None:
+    """returns given user's profile"""
+    try:
+        return Profile.objects.get(username=username, is_active=True, is_banned=False, is_public=True)
+    except Profile.DoesNotExist:
+        return None
+
+
 def get_profile_social_media(*, profile: Profile) -> QuerySet(ProfileLinks):
     """Returns social media links of given profile"""
 

@@ -12,7 +12,7 @@ from drf_spectacular.utils import extend_schema
 from ideagram.profiles.services import register, update_user_profile, follow_profile, add_social_media_to_profile
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
 from .selectors import get_user_profile, get_profile_social_media, get_profile_using_username, get_profile_followers, \
-    get_profile_followings
+    get_profile_followings, get_general_user_profile
 
 from ideagram.common.models import Address
 from ideagram.common.utils import inline_model_serializer
@@ -168,7 +168,40 @@ class UserProfileApi(ApiAuthMixin, APIView):
         return Response(data=update_serializer.data)
 
 
-class UserProfileFollowerListApi(ApiAuthMixin, APIView):
+
+class GeneralProfileApi(APIView):
+    class OutputGeneralUserProfileSerializer(serializers.ModelSerializer):
+        user = inline_model_serializer(
+            serializer_model=BaseUser,
+            serializer_name='output_general_user_profile_user',
+            model_fields=['email']
+        )()
+
+        address = inline_model_serializer(
+            serializer_name="general_user_profile_address_serializer",
+            serializer_model=Address,
+            model_fields=[
+                'country', 'state', 'city', 'address', 'zip_code'
+            ]
+        )()
+
+        class Meta:
+            model = Profile
+            fields = ('user', "username", "profile_image", "first_name", "last_name", "gender", "birth_date", "address"
+                      , "bio", "follower_count", "following_count", "idea_count")
+
+    @extend_schema(responses=OutputGeneralUserProfileSerializer, tags=['User'])
+    def get(self, request, username):
+        get_profile_using_username()
+        query = get_general_user_profile(username=username)
+        if not query:
+            return Response("User not found", status=status.HTTP_404_NOT_FOUND)
+
+        return Response(self.OutputGeneralUserProfileSerializer(instance=query).data)
+
+
+
+class UserProfileFollowerListApi(APIView):
     class OutputFollowerProfileSerializer(serializers.ModelSerializer):
         class Meta:
             model = Profile
@@ -187,7 +220,7 @@ class UserProfileFollowerListApi(ApiAuthMixin, APIView):
 
 
 
-class UserProfileFollowingListApi(ApiAuthMixin, APIView):
+class UserProfileFollowingListApi(APIView):
     class OutputFollowingProfileSerializer(serializers.ModelSerializer):
         class Meta:
             model = Profile

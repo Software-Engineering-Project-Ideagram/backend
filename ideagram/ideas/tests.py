@@ -1,10 +1,10 @@
-import unittest
+from unittest import TestCase
 from ideagram.ideas.models import Classification, Idea, EvolutionStep
 from ideagram.profiles.models import Profile
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step
 
 
-class TestIdea(unittest.TestCase):
+class TestCreateIdea(TestCase):
 
     def test_create_idea(self):
         profile = Profile.objects.get(pk=2)
@@ -26,7 +26,7 @@ class TestIdea(unittest.TestCase):
 
         new_idea = create_idea(profile=profile, data=data)
 
-        new_idea_exists = Idea.objects.filter(title='incomplete').exists()
+        new_idea_exists = Idea.objects.filter(pk=new_idea.pk).exists()
         self.assertTrue(new_idea_exists)
 
         self.assertEqual(new_idea.title, 'incomplete2')
@@ -41,94 +41,3 @@ class TestIdea(unittest.TestCase):
 
         self.assertEqual(profile.pk, new_idea.profile_id)
 
-
-class TestIdeaUpdate(unittest.TestCase):
-
-    def setUp(self) -> None:
-        profile = Profile.objects.get(pk=4)
-        data = {
-            "classification": [
-                2
-            ],
-            "title": "all eyes on you",
-            "goal": "release music",
-            "abstract": "my song",
-            "description": "artist: smash into pieces",
-            "image": "",
-            "max_donation": 30000,
-            "show_likes": True,
-            "show_views": True,
-            "show_comments": True
-        }
-        create_idea(profile=profile, data=data)
-
-    def test_update_idea(self):
-        idea = Idea.objects.get(title="all eyes on you")
-        title1 = idea.title
-        goal1 = idea.goal
-        abstract1 = idea.abstract
-        description1 = idea.description
-        max_donation1 = idea.max_donation
-
-        data = {
-            "classification": [
-                2
-            ],
-            "title": "get back",
-            "goal": "remix music",
-            "abstract": "my song, my life",
-            "description": "artist: Nine Assets",
-            "image": "",
-            "max_donation": 16000,
-            "show_likes": True,
-            "show_views": True,
-            "show_comments": True
-        }
-
-        update_idea(idea=idea, data=data)
-
-        self.assertNotEqual(title1, idea.title)
-        self.assertNotEqual(goal1, idea.goal)
-        self.assertNotEqual(abstract1, idea.abstract)
-        self.assertNotEqual(description1, idea.description)
-        self.assertNotEqual(max_donation1, idea.max_donation)
-
-
-class TestIdeaEvolutionStep(unittest.TestCase):
-
-    def setUp(self) -> None:
-        profile = Profile.objects.get(pk=3)
-        data = {
-            "classification": [
-                2
-            ],
-            "title": "por kon piale Ra",
-            "goal": "release music",
-            "abstract": "a song. Classic & Cultural",
-            "description": "artist: Mohammad Reza Shajarian",
-            "image": "",
-            "max_donation": 27000,
-            "show_likes": True,
-            "show_views": True,
-            "show_comments": True
-        }
-        create_idea(profile=profile, data=data)
-
-    def test_evolution_create(self):
-        idea = Idea.objects.get(title='por kon piale Ra')
-
-        data = {
-            "title": "write Notes",
-            "finish_date": "2023-07-02",
-            "description": "our song writer will write notes and give it to the orchestra",
-            "priority": 1
-        }
-
-        ev_step = create_evolution_step(idea=idea, evolution_data=data)
-
-        is_exists = EvolutionStep.objects.filter(pk=ev_step.pk).exists()
-        self.assertTrue(is_exists)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -305,6 +305,7 @@ class CollaborationRequestCreate(TestCase):
 
         is_exists = CollaborationRequest.objects.filter(pk=cr.pk).exists()
         self.assertTrue(is_exists)
+        self.assertEqual(cr.idea.pk, self.idea.pk)
 
 
 

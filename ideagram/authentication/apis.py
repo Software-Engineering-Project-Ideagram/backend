@@ -7,6 +7,8 @@ from rest_framework_simplejwt.views import TokenViewBase
 
 from ideagram.authentication.selectors import get_user_from_username
 from ideagram.authentication.services import get_jwt_tokens
+from ideagram.profiles.models import Profile
+from ideagram.profiles.selectors import get_user_profile
 
 
 class LoginView(APIView):

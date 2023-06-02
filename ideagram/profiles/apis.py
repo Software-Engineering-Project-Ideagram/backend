@@ -342,3 +342,12 @@ class ChangePasswordApi(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+
+class DeleteProfileAPI(ApiAuthMixin, APIView):
+
+    @extend_schema(tags=['User'])
+    def delete(self, request):
+        profile = get_user_profile(user=request.user)
+        profile.is_active = False
+        profile.save()
+        return Response(statuse=status.HTTP_200_OK)

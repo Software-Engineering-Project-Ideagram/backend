@@ -14,6 +14,8 @@ class Classification(models.Model):
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     title = models.CharField(max_length=50, unique=True)
 
+    def __str__(self):
+        return self.title
 
 
 class Idea(BaseModel):
@@ -39,6 +41,8 @@ class Idea(BaseModel):
     show_views = models.BooleanField(default=True)
     show_comments = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.title
 
 
 class EvolutionStep(models.Model):
@@ -51,7 +55,6 @@ class EvolutionStep(models.Model):
 
     class Meta:
         unique_together = ('idea', 'priority')
-
 
 
 class FinancialStep(models.Model):
@@ -71,6 +74,7 @@ class FinancialStep(models.Model):
 
 
 
+        
 class IdeaComment(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     date = models.DateTimeField(auto_now_add=True)
@@ -79,7 +83,11 @@ class IdeaComment(models.Model):
     comment = models.CharField(max_length=1000)
 
 
+class Organization(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    name = models.CharField(unique=True, max_length=200)
 
+    
 class IdeaLikes(models.Model):
 
     date = models.DateField(auto_now_add=True)
@@ -91,17 +99,17 @@ class IdeaLikes(models.Model):
 
 
 
-class Following(models.Model):
-    date = models.DateField(auto_now_add=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_follower')
-    profile_following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='profile_following')
-
-
 class CollaborationRequest(models.Model):
+    COLLABORATION_STATUS_TYPES = ['full_time', 'part_time', 'other']
+
+    __COLLABORATION_STATUS_CHOICES = [(x, x) for x in COLLABORATION_STATUS_TYPES]
+
+    title = models.CharField(max_length=200, blank=True, null=True)
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
     skills = models.CharField(max_length=200)
     age = models.PositiveIntegerField()
+    status = models.CharField(max_length=15, choices=__COLLABORATION_STATUS_CHOICES, blank=True, null=True)
     education = models.CharField(max_length=200)
     description = models.TextField()
     salary = models.PositiveIntegerField()
@@ -115,10 +123,27 @@ class IdeaAttachmentFile(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
+
 class Donation(models.Model):
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField()
     date = models.DateField(auto_now_add=True)
 
+
+class OfficialInformation(models.Model):
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    uuid = models.UUIDField(editable=False, default=uuid.uuid4)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    register_number = models.CharField(max_length=10)
+    description = models.CharField(max_length=500)
+
+
+class SavedIdea(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("profile", "idea")
 

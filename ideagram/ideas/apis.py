@@ -5,11 +5,10 @@ from rest_framework.views import APIView
 from django.db.models.aggregates import Sum
 
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
-from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin
-from ideagram.common.serializers import UUIDRelatedField
+from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin, ProfileCompletenessMixin
+from ideagram.common.serializers import UUIDRelatedField, StringRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
-from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, IdeaComment, \
-    IdeaAttachmentFile, Donation
+
 from ideagram.profiles.models import Profile
 from ideagram.users.models import BaseUser
 
@@ -19,12 +18,28 @@ from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, 
     get_sum_donation, get_idea_by_id
 
 
+from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, \
+    IdeaComment, \
+    IdeaAttachmentFile, Organization, OfficialInformation, SavedIdea, Donation
+
+
+from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
+    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, \
+    get_ideas_comment, \
+    get_idea_attachments, get_attachment_by_uuid, filter_ideas, get_collaboration_request_by_uuid, \
+    get_idea_collaboration_request, user_filter_ideas, get_official_information, get_official_information_by_uuid, \
+    get_profile_saved_idea
+
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
-    create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, update_collaboration_request, \
-    create_comment_for_idea, add_attachment_file, add_donation
+
+    create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, \
+    update_collaboration_request, \
+    create_comment_for_idea, add_attachment_file, is_forbidden_word_exists, create_official_information, \
+    update_official_information, add_idea_to_save_list, add_donation
+from ideagram.profiles.models import Profile
+
 
 from ideagram.profiles.selectors import get_user_profile
-
 
 
 class ClassificationAPI(APIView):
@@ -33,31 +48,51 @@ class ClassificationAPI(APIView):
             model = Classification
             fields = ['uuid', 'title']
 
-    @extend_schema(responses=OutputClassificationSerializer, tags=['Classification'])
+    @extend_schema(responses=OutputClassificationSerializer(many=True), tags=['Classification'])
     def get(self, request):
         classifications = get_all_classifications()
         serializer = self.OutputClassificationSerializer(instance=classifications, many=True)
         return Response(data=serializer.data)
 
 
-class IdeaCreateAPI(ActiveProfileMixin, APIView):
+class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
     class InputIdeaCreateSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
 
         class Meta:
             model = Idea
             fields = ['classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
                       'show_likes', 'show_views', 'show_comments']
 
+        def validate_goal(self, goal):
+            if is_forbidden_word_exists(text=goal):
+                raise serializers.ValidationError("Goal contains some forbidden words")
+            return goal
+
+        def validate_abstract(self, abstract):
+            if is_forbidden_word_exists(text=abstract):
+                raise serializers.ValidationError("abstract contains some forbidden words")
+            return abstract
+
+        def validate_description(self, description):
+            if is_forbidden_word_exists(text=description):
+                raise serializers.ValidationError("description contains some forbidden words")
+            return description
+
+        def validate_title(self, title):
+            if is_forbidden_word_exists(text=title):
+                raise serializers.ValidationError("title contains some forbidden words")
+            return title
+
     class OutputIdeaCreateSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
 
         class Meta:
             model = Idea
             fields = ['uuid', 'classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
                       'show_likes', 'show_views', 'show_comments']
 
-    @extend_schema(request=InputIdeaCreateSerializer, tags=['Idea'])
+    @extend_schema(request=InputIdeaCreateSerializer, responses=OutputIdeaCreateSerializer, tags=['Idea'])
     def post(self, request):
         serializer = self.InputIdeaCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -69,17 +104,24 @@ class IdeaCreateAPI(ActiveProfileMixin, APIView):
 
 class IdeaDetailView(ApiAuthMixin, APIView):
     class OutputDetailSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(queryset=Classification.objects.all(), uuid_field='uuid', many=True)
+        classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_idea_detail_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count', 'profile_image']
+        )()
 
         class Meta:
             model = Idea
-            fields = ['uuid', 'classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
+            fields = ['uuid', 'profile', 'classification', 'title', 'goal', 'abstract', 'description', 'image',
+                      'max_donation',
                       'show_likes', 'show_views', 'show_comments', 'views_count', 'likes_count', 'comments_count']
 
     class InputUpdateIdeaSerializer(serializers.ModelSerializer):
-        classification = UUIDRelatedField(
+        classification = StringRelatedField(
             queryset=Classification.objects.all(),
-            uuid_field='uuid',
+            string_field='title',
             many=True,
             required=False
         )
@@ -140,7 +182,7 @@ class IdeaEvolutionStepApi(ActiveProfileMixin, APIView):
             model = EvolutionStep
             fields = ['uuid', 'idea', 'title', 'finish_date', 'description', 'priority']
 
-    @extend_schema(responses=OutputCreateEvolutionStepSerializer, tags=['Evolution Step'])
+    @extend_schema(responses=OutputCreateEvolutionStepSerializer(many=True), tags=['Evolution Step'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -232,7 +274,7 @@ class IdeaFinancialStepApi(ActiveProfileMixin, APIView):
             model = FinancialStep
             fields = ['uuid', 'idea', 'title', 'cost', 'description', 'priority', 'unit']
 
-    @extend_schema(responses=OutputCreateFinancialStepSerializer, tags=['Financial Step'])
+    @extend_schema(responses=OutputCreateFinancialStepSerializer(many=True), tags=['Financial Step'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -307,9 +349,20 @@ class IdeaFinancialDetailApi(ActiveProfileMixin, APIView):
         return Response(status=status.HTTP_200_OK)
 
 
+class OrganizationListAPI(APIView):
+    class OutputOrganizationSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Organization
+            fields = ["uuid", "name"]
+
+    @extend_schema(responses=OutputOrganizationSerializer(many=True), tags=["Organization"])
+    def get(self, request):
+        organizations = Organization.objects.all()
+        serializer = self.OutputOrganizationSerializer(instance=organizations, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
 
 class IdeaLikeApi(APIView):
-
     class UserLikeSerializer(serializers.ModelSerializer):
         class Meta:
             model = IdeaLikes
@@ -336,7 +389,7 @@ class IdeaLikeApi(APIView):
         unlike_idea(idea_uuid=idea_uuid, user=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-      
+
 class IdeaCommentApi(ActiveProfileMixin, APIView):
     class InputIdeaCommentSerializer(serializers.ModelSerializer):
         class Meta:
@@ -344,6 +397,13 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
             fields = ["comment"]
 
     class OutputIdeaCommentSerializer(serializers.ModelSerializer):
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_idea_comment_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count', 'profile_image']
+        )()
+
         class Meta:
             model = IdeaComment
             fields = ["uuid", "date", "profile", "idea", 'comment']
@@ -358,7 +418,6 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
         serializer = self.OutputIdeaCommentSerializer(instance=comments, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-
     @extend_schema(request=InputIdeaCommentSerializer, responses=OutputIdeaCommentSerializer, tags=["Comments"])
     def post(self, request, idea_uuid):
         serializer = self.InputIdeaCommentSerializer(data=request.data)
@@ -369,22 +428,22 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
         output_serializer = self.OutputIdeaCommentSerializer(instance=comment)
         return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
 
-      
+
 class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
     class InputIdeaCollaborationRequestSerializer(serializers.ModelSerializer):
 
         class Meta:
             model = CollaborationRequest
-            fields = ['skills', 'age', 'education', 'description', 'salary']
+            fields = ['title', 'status', 'skills', 'age', 'education', 'description', 'salary']
 
     class OutputCollaborationRequestSerializer(serializers.ModelSerializer):
         idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
 
         class Meta:
             model = CollaborationRequest
-            fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
+            fields = ['title', 'status', 'uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
 
-    @extend_schema(responses=OutputCollaborationRequestSerializer, tags=['Collaboration Request'])
+    @extend_schema(responses=OutputCollaborationRequestSerializer(many=True), tags=['Collaboration Request'])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
         if not idea:
@@ -401,7 +460,7 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
         if not idea:
             return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
 
-        serializer = self.InputIdeaCollaborationRequestSerializer(data=request.data, many=True)
+        serializer = self.InputIdeaCollaborationRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         new_collaboration_request = create_collaboration_request(idea=idea, data=serializer.validated_data)
@@ -414,7 +473,7 @@ class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
     class InputUpdateCollaborationRequestSerializer(serializers.ModelSerializer):
         class Meta:
             model = CollaborationRequest
-            optional_fields = ['skills', 'age', 'description', 'education','salary']
+            optional_fields = ['title', 'status', 'skills', 'age', 'description', 'education', 'salary']
             required_fields = []
             fields = [*optional_fields, *required_fields]
             extra_kwargs = dict((x, {'required': False}) for x in optional_fields)
@@ -424,7 +483,7 @@ class IdeaCollaborationRequestDetailApi(ActiveProfileMixin, APIView):
 
         class Meta:
             model = CollaborationRequest
-            fields = ['uuid', 'idea', 'skills', 'age', 'description', 'education', 'salary']
+            fields = ['uuid', 'title', 'status', 'idea', 'skills', 'age', 'description', 'education', 'salary']
 
     @extend_schema(request=InputUpdateCollaborationRequestSerializer,
                    responses=OutputCollaborationRequestDetailSerializer,
@@ -461,7 +520,6 @@ class IdeaAttachmentApi(ActiveProfileMixin, APIView):
             model = IdeaAttachmentFile
             fields = ['uuid', 'file', 'created_at']
 
-
     @extend_schema(responses=OutputAttachmentSerializer(many=True), tags=["Attachments"])
     def get(self, request, idea_uuid):
         idea = get_idea_by_uuid(uuid=idea_uuid)
@@ -471,7 +529,6 @@ class IdeaAttachmentApi(ActiveProfileMixin, APIView):
         attachments = get_idea_attachments(idea=idea)
         serializer = self.OutputAttachmentSerializer(instance=attachments, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
-
 
     @extend_schema(request=InputAttachmentSerializer, responses=OutputAttachmentSerializer, tags=["Attachments"])
     def post(self, request, idea_uuid):
@@ -500,6 +557,7 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
         attachment.delete()
         return Response(status=status.HTTP_200_OK)
+
 
 
 class DonateIdeaApi(ActiveProfileMixin, APIView):
@@ -531,3 +589,271 @@ class DonateIdeaApi(ActiveProfileMixin, APIView):
 
 
 
+class IdeaFilterApi(APIView):
+    class InputIdeaFilterSerializer(serializers.Serializer):
+        classification = StringRelatedField(
+            queryset=Classification.objects.all(),
+            string_field='title',
+            many=True,
+            required=False
+        )
+        usernames = serializers.ListField(child=serializers.CharField(max_length=128), required=False)
+        emails = serializers.ListField(child=serializers.EmailField(), required=False)
+        sort_by = serializers.ChoiceField(choices=[
+            ('views_count', 'views_count'), ('likes_count', 'likes_count'), ('comments_count', 'comments_count'),
+            ('created_at', 'created_at')
+        ], required=False)
+
+        def validate(self, attrs):
+            if attrs.get('usernames', None) and attrs.get('emails', None):
+                raise serializers.ValidationError(
+                    "Only one of 'emails' or 'usernames' fields can be used to apply filter"
+                )
+
+            return attrs
+
+    class OutputIdeaFilterSerializer(serializers.ModelSerializer):
+        views_count = serializers.SerializerMethodField()
+        likes_count = serializers.SerializerMethodField()
+        comments_count = serializers.SerializerMethodField()
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_idea_filter_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count', 'profile_image']
+        )()
+
+        class Meta:
+            model = Idea
+            fields = ['uuid', 'profile', 'title', 'abstract', 'goal', 'image', 'views_count', 'likes_count',
+                      'comments_count']
+
+        def get_views_count(self, idea):
+            if idea.show_views:
+                return idea.views_count
+            return None
+
+        def get_likes_count(self, idea):
+            if idea.show_likes:
+                return idea.likes_count
+            return None
+
+        def get_comments_count(self, idea):
+            if idea.show_comments:
+                return idea.comments_count
+            return None
+
+    @extend_schema(request=InputIdeaFilterSerializer, responses=OutputIdeaFilterSerializer(many=True), tags=['Filter'])
+    def post(self, request):
+        serializer = self.InputIdeaFilterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        ideas = filter_ideas(**serializer.validated_data)
+
+        output_serializer = self.OutputIdeaFilterSerializer(instance=ideas, many=True)
+        return Response(data=output_serializer.data, status=status.HTTP_200_OK)
+
+
+class UserIdeaFilterApi(ApiAuthMixin, APIView):
+    class InputUserIdeaFilterSerializer(serializers.Serializer):
+        classification = StringRelatedField(
+            queryset=Classification.objects.all(),
+            string_field='title',
+            many=True,
+            required=False
+        )
+        sort_by = serializers.ChoiceField(choices=[
+            ('views_count', 'views_count'), ('likes_count', 'likes_count'), ('comments_count', 'comments_count'),
+            ('created_at', 'created_at')
+        ], required=False)
+
+    class OutputUserIdeaFilterSerializer(serializers.ModelSerializer):
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_user_idea_filter_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count', 'profile_image']
+        )()
+
+        class Meta:
+            model = Idea
+            fields = ['uuid', 'profile', 'title', 'goal', 'abstract', 'image', 'views_count', 'likes_count',
+                      'comments_count']
+
+    @extend_schema(request=InputUserIdeaFilterSerializer, responses=OutputUserIdeaFilterSerializer(many=True),
+                   tags=['Filter'])
+    def post(self, request):
+        serializer = self.InputUserIdeaFilterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        profile = get_user_profile(user=request.user)
+
+        ideas = user_filter_ideas(profile=profile, **serializer.validated_data)
+
+        output_serializer = self.OutputUserIdeaFilterSerializer(instance=ideas, many=True)
+        return Response(data=output_serializer.data, status=status.HTTP_200_OK)
+
+
+# ===============================================================================================
+
+
+class IdeaOfficialInformationApi(ActiveProfileMixin, APIView):
+    class InputCreateOfficialInformationSerializer(serializers.ModelSerializer):
+        organization = UUIDRelatedField(queryset=Organization.objects.all(), uuid_field='uuid')
+
+        class Meta:
+            model = OfficialInformation
+            fields = ['organization', 'register_number', 'description']
+
+    class OutputCreateOfficialInformationSerializer(serializers.ModelSerializer):
+        idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
+        organization = inline_model_serializer(
+            serializer_model=Organization,
+            serializer_name="output_official_information_organization",
+            model_fields="__all__"
+        )
+
+        class Meta:
+            model = OfficialInformation
+            fields = ['uuid', 'idea', 'organization', 'register_number', 'description']
+
+    @extend_schema(responses=OutputCreateOfficialInformationSerializer(many=True), tags=['Official Information'])
+    def get(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        info = get_official_information(idea=idea)
+        serializer = self.OutputCreateOfficialInformationSerializer(instance=info, many=True)
+        return Response(data=serializer.data)
+
+    @extend_schema(request=InputCreateOfficialInformationSerializer(many=True),
+                   responses=OutputCreateOfficialInformationSerializer(many=True),
+                   tags=['Official Information'])
+    def post(self, request, idea_uuid):
+        idea = get_idea_by_uuid(uuid=idea_uuid, user=request.user)
+        if not idea:
+            return Response("No idea found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.InputCreateOfficialInformationSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        created_info = []
+
+        for data in serializer.validated_data:
+            info = create_official_information(idea=idea, information_data=data)
+            if info:
+                created_info.append(info)
+            else:
+                return Response(
+                    f"You have reached maximum number of official information",
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        output_serializer = self.OutputCreateOfficialInformationSerializer(instance=created_info, many=True)
+        return Response(data=output_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class IdeaOfficialInformationDetailApi(ActiveProfileMixin, APIView):
+    class InputUpdateOfficialInformationSerializer(serializers.ModelSerializer):
+        organization = UUIDRelatedField(queryset=Organization.objects.all(), uuid_field='uuid')
+
+        class Meta:
+            model = OfficialInformation
+            optional_fields = ['organization', 'register_number', 'description']
+            required_fields = []
+            fields = [*optional_fields, *required_fields]
+            extra_kwargs = dict((x, {'required': False}) for x in optional_fields)
+
+    class OutputOfficialInformationDetailSerializer(serializers.ModelSerializer):
+        idea = UUIDRelatedField(queryset=Idea.objects.all(), uuid_field='uuid')
+        organization = inline_model_serializer(
+            serializer_model=Organization,
+            serializer_name="output_official_information_detail_organization",
+            model_fields="__all__"
+        )
+
+        class Meta:
+            model = OfficialInformation
+            fields = ['uuid', 'idea', 'organization', 'register_number', 'description']
+
+    @extend_schema(request=InputUpdateOfficialInformationSerializer,
+                   responses=OutputOfficialInformationDetailSerializer,
+                   tags=['Official Information'])
+    def put(self, request, information_uuid):
+        serializer = self.InputUpdateOfficialInformationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        info = get_official_information_by_uuid(uuid=information_uuid, user=request.user)
+        if not info:
+            return Response("No official information found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        updated_info = update_official_information(official_information=info, data=serializer.validated_data)
+        output_serializer = self.OutputOfficialInformationDetailSerializer(instance=updated_info)
+        return Response(data=output_serializer.data)
+
+    @extend_schema(tags=['Official Information'])
+    def delete(self, request, information_uuid):
+
+        info = get_official_information_by_uuid(uuid=information_uuid, user=request.user)
+        if not info:
+            return Response("No official information found with this uuid!", status=status.HTTP_404_NOT_FOUND)
+
+        info.delete()
+        return Response(status=status.HTTP_200_OK)
+
+
+# ===============================================================================================
+
+
+class SaveIdeaApi(ApiAuthMixin, APIView):
+
+    @extend_schema(tags=['Saved Ideas'])
+    def post(self, request, idea_uuid):
+        try:
+            idea = add_idea_to_save_list(user=request.user, idea_uuid=idea_uuid)
+        except ValueError:
+            return Response("Invalid idea uuid", status=status.HTTP_400_BAD_REQUEST)
+
+        if idea is None:
+            return Response("This idea is already saved", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_200_OK)
+
+    @extend_schema(tags=['Saved Ideas'])
+    def delete(self, request, idea_uuid):
+        try:
+            SavedIdea.objects.filter(profile=get_user_profile(user=request.user), idea__uuid=idea_uuid).delete()
+        except:
+            pass
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class SavedIdeaListApi(ApiAuthMixin, APIView):
+    class OutputSavedIdeaSerializer(serializers.ModelSerializer):
+        idea = inline_model_serializer(
+            serializer_model=Idea,
+            serializer_name="output_saved_idea_list_idea_serializer",
+            model_fields=['uuid', 'profile', 'title', 'abstract', 'goal', 'image', 'views_count', 'likes_count',
+                          'comments_count'],
+            serializer_custom_fields={
+                "profile": inline_model_serializer(
+                    serializer_model=Profile,
+                    serializer_name="output_saved_ideas_profile_serializer",
+                    model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                                  'idea_count', 'profile_image']
+                )()
+            }
+        )()
+
+        class Meta:
+            model = SavedIdea
+            fields = ['idea', 'date']
+
+    @extend_schema(responses=OutputSavedIdeaSerializer(many=True), tags=['Saved Ideas'])
+    def get(self, request):
+        profile = get_user_profile(user=request.user)
+        saved_ideas = get_profile_saved_idea(profile=profile)
+        serializer = self.OutputSavedIdeaSerializer(instance=saved_ideas, many=True)
+
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

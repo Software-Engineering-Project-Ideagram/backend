@@ -2,12 +2,25 @@ from django.db import transaction
 from django.db import IntegrityError
 
 from config.settings.idea import MAX_FILE_ATTACHMENT_COUNT
+from ideagram.common.models import ForbiddenWord
 from ideagram.common.utils import update_model_instance
 
 from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile, IdeaLikes, Donation
+    IdeaAttachmentFile, IdeaLikes, OfficialInformation, SavedIdea, Donation
+
+from ideagram.ideas.selectors import get_idea_by_uuid
 
 from ideagram.profiles.models import Profile
+from ideagram.profiles.selectors import get_user_profile
+
+
+def is_forbidden_word_exists(*, text: str) -> bool:
+    forbidden_words = ForbiddenWord.objects.all()
+    for word in forbidden_words:
+        if word.word in text:
+            return True
+
+    return False
 
 
 @transaction.atomic
@@ -56,7 +69,6 @@ def update_financial_step(*, financial_step: FinancialStep, data: dict) -> Finan
     return updated_step
 
 
-
 @transaction.atomic
 def like_idea(*, idea_uuid: str, user_id: str):
     try:
@@ -68,12 +80,12 @@ def like_idea(*, idea_uuid: str, user_id: str):
 @transaction.atomic
 def unlike_idea(*, idea_uuid: str, user):
     try:
-        entry = IdeaLikes.objects.get(uuid=idea_uuid, user=user)
+        entry = IdeaLikes.objects.get(idea_id__uuid=idea_uuid, profile_id__user=user)
         entry.delete()
     except IdeaLikes.DoesNotExist:
         return None
 
-  
+
 @transaction.atomic
 def create_comment_for_idea(*, idea: Idea, profile: Profile, data: dict) -> IdeaComment:
     comment = IdeaComment.objects.create(idea=idea, profile=profile, **data)
@@ -105,3 +117,37 @@ def add_attachment_file(*, idea: Idea, data: dict) -> IdeaAttachmentFile | None:
 @transaction.atomic
 def add_donation(*, profile: Profile, idea: Idea, amount: int):
     Donation.objects.create(profile=profile, idea=idea, amount=amount)
+
+    
+def create_official_information(*, idea: Idea, information_data: dict) -> OfficialInformation | None:
+    if OfficialInformation.objects.filter(idea=idea).count() >= 5:
+        return None
+
+    step = OfficialInformation.objects.create(idea=idea, **information_data)
+
+    return step
+
+
+
+@transaction.atomic
+def update_official_information(*, official_information: OfficialInformation, data: dict) -> OfficialInformation:
+    updated_info = update_model_instance(instance=official_information, data=data)
+    return updated_info
+
+
+
+@transaction.atomic
+def add_idea_to_save_list(*, user, idea_uuid) -> Idea:
+    profile = get_user_profile(user=user)
+    idea = get_idea_by_uuid(uuid=idea_uuid)
+
+    if not idea:
+        raise ValueError("Invalid idea uuid")
+
+    try:
+        SavedIdea.objects.create(profile=profile, idea=idea)
+    except IntegrityError:
+        return None
+
+    return idea
+

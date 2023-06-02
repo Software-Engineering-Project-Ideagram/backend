@@ -33,6 +33,7 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_extensions',
+    'django_celery_results',
 ]
 
 INSTALLED_APPS = [
@@ -62,7 +63,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -172,5 +173,14 @@ from config.settings.celery import *  # noqa
 from config.settings.swagger import *  # noqa
 #from config.settings.sentry import *  # noqa
 
-#from config.settings.files_and_storages import *  # noqa
-#from config.settings.email_sending import *  # noqa
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'ideagramtestmail@gmail.com'
+EMAIL_HOST_PASSWORD = 'ygjufxokbslnbocu'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_VERIFY_SALT = "i2fgK8RfKF"
+EMAIL_VERIFY_EXPIRE_MINUTES=15
+EMAIL_VERIFY_URL = "api.iwantnet.space:8001/profile/verification/"
+

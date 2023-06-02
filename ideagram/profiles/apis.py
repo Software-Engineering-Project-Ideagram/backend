@@ -192,7 +192,6 @@ class GeneralProfileApi(APIView):
 
     @extend_schema(responses=OutputGeneralUserProfileSerializer, tags=['User'])
     def get(self, request, username):
-        get_profile_using_username()
         query = get_general_user_profile(username=username)
         if not query:
             return Response("User not found", status=status.HTTP_404_NOT_FOUND)

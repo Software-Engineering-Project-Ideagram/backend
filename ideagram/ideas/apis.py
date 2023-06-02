@@ -24,6 +24,7 @@ from ideagram.ideas.services import create_idea, update_idea, create_evolution_s
     update_collaboration_request, \
     create_comment_for_idea, add_attachment_file, is_forbidden_word_exists, create_official_information, \
     update_official_information, add_idea_to_save_list
+from ideagram.profiles.models import Profile
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -91,10 +92,16 @@ class IdeaCreateAPI(ProfileCompletenessMixin, APIView):
 class IdeaDetailView(ApiAuthMixin, APIView):
     class OutputDetailSerializer(serializers.ModelSerializer):
         classification = StringRelatedField(queryset=Classification.objects.all(), string_field='title', many=True)
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_idea_detail_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count']
+        )()
 
         class Meta:
             model = Idea
-            fields = ['uuid', 'classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
+            fields = ['uuid', 'profile', 'classification', 'title', 'goal', 'abstract', 'description', 'image', 'max_donation',
                       'show_likes', 'show_views', 'show_comments', 'views_count', 'likes_count', 'comments_count']
 
     class InputUpdateIdeaSerializer(serializers.ModelSerializer):
@@ -376,6 +383,13 @@ class IdeaCommentApi(ActiveProfileMixin, APIView):
             fields = ["comment"]
 
     class OutputIdeaCommentSerializer(serializers.ModelSerializer):
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_idea_comment_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count']
+        )()
+
         class Meta:
             model = IdeaComment
             fields = ["uuid", "date", "profile", "idea", 'comment']
@@ -405,7 +419,6 @@ class IdeaCollaborationRequestApi(ActiveProfileMixin, APIView):
     class InputIdeaCollaborationRequestSerializer(serializers.ModelSerializer):
 
         class Meta:
-
             model = CollaborationRequest
             fields = ['title', 'status', 'skills', 'age', 'education', 'description', 'salary']
 
@@ -605,7 +618,6 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
         ], required=False)
 
     class OutputUserIdeaFilterSerializer(serializers.ModelSerializer):
-
         class Meta:
             model = Idea
             fields = ['uuid', 'profile', 'title', 'goal', 'abstract', 'image', 'views_count', 'likes_count',
@@ -630,6 +642,7 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
 
 class IdeaOfficialInformationApi(ActiveProfileMixin, APIView):
     class InputCreateOfficialInformationSerializer(serializers.ModelSerializer):
+        organization = UUIDRelatedField(queryset=Organization.objects.all(), uuid_field='uuid')
 
         class Meta:
             model = OfficialInformation
@@ -646,7 +659,6 @@ class IdeaOfficialInformationApi(ActiveProfileMixin, APIView):
         class Meta:
             model = OfficialInformation
             fields = ['uuid', 'idea', 'organization', 'register_number', 'description']
-
 
     @extend_schema(responses=OutputCreateOfficialInformationSerializer(many=True), tags=['Official Information'])
     def get(self, request, idea_uuid):
@@ -686,6 +698,8 @@ class IdeaOfficialInformationApi(ActiveProfileMixin, APIView):
 
 class IdeaOfficialInformationDetailApi(ActiveProfileMixin, APIView):
     class InputUpdateOfficialInformationSerializer(serializers.ModelSerializer):
+        organization = UUIDRelatedField(queryset=Organization.objects.all(), uuid_field='uuid')
+
         class Meta:
             model = OfficialInformation
             optional_fields = ['organization', 'register_number', 'description']
@@ -700,6 +714,7 @@ class IdeaOfficialInformationDetailApi(ActiveProfileMixin, APIView):
             serializer_name="output_official_information_detail_organization",
             model_fields="__all__"
         )
+
         class Meta:
             model = OfficialInformation
             fields = ['uuid', 'idea', 'organization', 'register_number', 'description']
@@ -754,13 +769,12 @@ class SavedIdeaListApi(ApiAuthMixin, APIView):
             serializer_model=Idea,
             serializer_name="output_saved_idea_list_idea_serializer",
             model_fields=['uuid', 'profile', 'title', 'abstract', 'goal', 'image', 'views_count', 'likes_count',
-                      'comments_count']
+                          'comments_count']
         )
 
         class Meta:
             model = SavedIdea
-            fields =['idea', 'date']
-
+            fields = ['idea', 'date']
 
     @extend_schema(responses=OutputSavedIdeaSerializer(many=True), tags=['Saved Ideas'])
     def get(self, request):
@@ -769,4 +783,3 @@ class SavedIdeaListApi(ApiAuthMixin, APIView):
         serializer = self.OutputSavedIdeaSerializer(instance=saved_ideas, many=True)
 
         return Response(data=serializer.data, status=status.HTTP_200_OK)
-

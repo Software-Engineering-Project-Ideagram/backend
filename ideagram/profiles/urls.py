@@ -5,7 +5,7 @@ from .apis import UserProfileApi, RegisterApi, UserProfileSocialMediaApi, Follow
 urlpatterns = [
     path('register/', RegisterApi.as_view(), name="register"),
     path('profile/', UserProfileApi.as_view(), name="user-profile"),
-    path('general/profile/', GeneralProfileApi.as_view(), name="general-user-profile"),
+    path('general/profile/<str:username>', GeneralProfileApi.as_view(), name="general-user-profile"),
     path('profile/followers/<str:username>', UserProfileFollowerListApi.as_view(), name="profile-followers"),
     path('profile/followings/<str:username>', UserProfileFollowingListApi.as_view(), name="profile-followings"),
     path('social-media/', UserProfileSocialMediaApi.as_view(), name="user-social-media"),

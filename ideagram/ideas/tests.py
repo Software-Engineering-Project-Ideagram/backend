@@ -355,64 +355,70 @@ class CollaborationRequestCreate(TestCase):
         self.assertEqual(cr.idea.pk, self.idea.pk)
 
 
-# class CollaborationRequestUpdate(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=4)
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "I Will Survive",
-#             "goal": "release music. the best song of the century",
-#             "abstract": "a song. Classic & Cultural",
-#             "description": "artist: Gloria Gaynor",
-#             "image": "",
-#             "max_donation": 30000,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#         data = {
-#           "title": "piano player",
-#           "status": "full_time",
-#           "skills": "reading note and 5 years experience about music & Piano",
-#           "age": 25,
-#           "education": "jazz music",
-#           "description": "string",
-#           "salary": 18000
-#         }
-#
-#         self.cr = create_collaboration_request(idea=self.idea, data=data)
-#
-#     def test_update_cr(self):
-#         title1 = self.cr.title
-#         skills1 = self.cr.skills
-#         age1 = self.cr.age
-#         education1 = self.cr.education
-#         salary1 = self.cr.salary
-#
-#         data2 = {
-#           "title": "piano player and composer",
-#           "status": "full_time",
-#           "skills": "reading note and 5 years experience about music & Piano & violin",
-#           "age": 30,
-#           "education": "jazz music from new york music faculty",
-#           "description": "string",
-#           "salary": 30000
-#         }
-#
-#         update_collaboration_request(collaboration_request=self.cr, data=data2)
-#
-#         self.assertNotEqual(title1, self.cr.title)
-#         self.assertNotEqual(skills1, self.cr.skills)
-#         self.assertNotEqual(age1, self.cr.age)
-#         self.assertNotEqual(education1, self.cr.education)
-#         self.assertNotEqual(salary1, self.cr.salary)
-#
-#
+class CollaborationRequestUpdate(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        data = {
+          "title": "piano player",
+          "status": "full_time",
+          "skills": "reading note and 5 years experience about music & Piano",
+          "age": 25,
+          "education": "jazz music",
+          "description": "string",
+          "salary": 18000
+        }
+
+        self.cr = create_collaboration_request(idea=self.idea, data=data)
+
+    def test_update_cr(self):
+        title1 = self.cr.title
+        skills1 = self.cr.skills
+        age1 = self.cr.age
+        education1 = self.cr.education
+        salary1 = self.cr.salary
+
+        data2 = {
+          "title": "piano player and composer",
+          "status": "full_time",
+          "skills": "reading note and 5 years experience about music & Piano & violin",
+          "age": 30,
+          "education": "jazz music from new york music faculty",
+          "description": "string",
+          "salary": 30000
+        }
+
+        update_collaboration_request(collaboration_request=self.cr, data=data2)
+
+        self.assertNotEqual(title1, self.cr.title)
+        self.assertNotEqual(skills1, self.cr.skills)
+        self.assertNotEqual(age1, self.cr.age)
+        self.assertNotEqual(education1, self.cr.education)
+        self.assertNotEqual(salary1, self.cr.salary)
+
+
 # class CommentTest(TestCase):
 #
 #     def setUp(self) -> None:

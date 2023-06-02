@@ -572,6 +572,12 @@ class IdeaFilterApi(APIView):
         views_count = serializers.SerializerMethodField()
         likes_count = serializers.SerializerMethodField()
         comments_count = serializers.SerializerMethodField()
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_idea_filter_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count']
+        )()
 
         class Meta:
             model = Idea
@@ -618,6 +624,12 @@ class UserIdeaFilterApi(ApiAuthMixin, APIView):
         ], required=False)
 
     class OutputUserIdeaFilterSerializer(serializers.ModelSerializer):
+        profile = inline_model_serializer(
+            serializer_model=Profile,
+            serializer_name="output_user_idea_filter_profile_serializer",
+            model_fields=['username', 'first_name', 'last_name', 'bio', 'follower_count', 'following_count',
+                          'idea_count']
+        )()
         class Meta:
             model = Idea
             fields = ['uuid', 'profile', 'title', 'goal', 'abstract', 'image', 'views_count', 'likes_count',
@@ -759,6 +771,15 @@ class SaveIdeaApi(ApiAuthMixin, APIView):
 
         if idea is None:
             return Response("This idea is already saved", status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_200_OK)
+
+    @extend_schema(tags=['Saved Ideas'])
+    def delete(self, request, idea_uuid):
+        try:
+            SavedIdea.objects.filter(profile=get_user_profile(user=request.user), idea__uuid=idea_uuid).delete()
+        except:
+            pass
 
         return Response(status=status.HTTP_200_OK)
 

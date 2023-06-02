@@ -1,9 +1,10 @@
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Sum
 
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile, IdeaLikes, OfficialInformation, SavedIdea
+    IdeaAttachmentFile, IdeaLikes, OfficialInformation, SavedIdea, Donation
 from ideagram.profiles.models import Profile
 from ideagram.profiles.selectors import get_user_profile
+
 
 from ideagram.users.models import BaseUser
 
@@ -105,6 +106,15 @@ def get_attachment_by_uuid(*, uuid: str, user: BaseUser = None) -> IdeaAttachmen
 
 
 
+def get_sum_donation(*, idea: Idea):
+    return Donation.objects.filter(idea=idea).aggregate(Sum('amount'))['amount__sum']
+
+
+def get_idea_by_id(*, idea_id: int):
+    return Idea.objects.get(id=idea_id)
+
+
+
 def filter_ideas(
         classification: list = None, usernames: list=None, emails: list=None, sort_by: str='created_at'
         ) -> QuerySet(Idea):
@@ -157,4 +167,5 @@ def get_official_information_by_uuid(*, uuid: str, user: BaseUser = None) -> Off
 
 def get_profile_saved_idea(*, profile: Profile) -> SavedIdea:
     return SavedIdea.objects.filter(profile=profile)
+
 

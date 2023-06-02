@@ -2,15 +2,26 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models.aggregates import Sum
 
 from config.settings.idea import MAX_EVOLUTIONARY_STEPS_COUNT, MAX_FINANCIAL_STEPS_COUNT
 from ideagram.api.mixins import ApiAuthMixin, ActiveProfileMixin, ProfileCompletenessMixin
 from ideagram.common.serializers import UUIDRelatedField, StringRelatedField
 from ideagram.common.utils import inline_serializer, inline_model_serializer
 
+from ideagram.profiles.models import Profile
+from ideagram.users.models import BaseUser
+
+from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
+    get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, get_ideas_comment, \
+    get_idea_attachments, get_attachment_by_uuid, get_collaboration_request_by_uuid, get_idea_collaboration_request, \
+    get_sum_donation, get_idea_by_id
+
+
 from ideagram.ideas.models import Classification, Idea, EvolutionStep, FinancialStep, IdeaLikes, CollaborationRequest, \
     IdeaComment, \
-    IdeaAttachmentFile, Organization, OfficialInformation, SavedIdea
+    IdeaAttachmentFile, Organization, OfficialInformation, SavedIdea, Donation
+
 
 from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, get_idea_evolutionary_steps, \
     get_evolutionary_step_by_uuid, get_idea_financial_steps, get_financial_step_by_uuid, get_idea_likes, \
@@ -20,11 +31,13 @@ from ideagram.ideas.selectors import get_all_classifications, get_idea_by_uuid, 
     get_profile_saved_idea
 
 from ideagram.ideas.services import create_idea, update_idea, create_evolution_step, update_evolutionary_step, \
+
     create_financial_step, update_financial_step, like_idea, unlike_idea, create_collaboration_request, \
     update_collaboration_request, \
     create_comment_for_idea, add_attachment_file, is_forbidden_word_exists, create_official_information, \
-    update_official_information, add_idea_to_save_list
+    update_official_information, add_idea_to_save_list, add_donation
 from ideagram.profiles.models import Profile
+
 
 from ideagram.profiles.selectors import get_user_profile
 
@@ -544,6 +557,36 @@ class IdeaAttachmentDetailApi(ActiveProfileMixin, APIView):
 
         attachment.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+
+class DonateIdeaApi(ActiveProfileMixin, APIView):
+
+    class DonationSerializer(serializers.ModelSerializer):
+        idea = serializers.PrimaryKeyRelatedField(queryset=Idea.objects.all())
+
+        class Meta:
+            model = Donation
+            fields = ['idea', 'amount', 'date']
+
+    @extend_schema(request=DonationSerializer,
+                   tags=['Idea Donation'])
+    def post(self, request):
+
+        serializer = self.DonationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        profile = Profile.objects.get(user=request.user)
+        idea = get_idea_by_id(idea_id=serializer.validated_data['idea'].id)
+        amount = serializer.validated_data['amount']
+
+        current_donation = get_sum_donation(idea=idea)
+        if current_donation + amount < idea.max_donation:
+            add_donation(profile=profile, idea=idea, amount=amount)
+            return Response(status=status.HTTP_201_CREATED)
+        else:
+            return Response("amount of Donation is greater than limitation", status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class IdeaFilterApi(APIView):

@@ -6,7 +6,8 @@ from ideagram.common.models import ForbiddenWord
 from ideagram.common.utils import update_model_instance
 
 from ideagram.ideas.models import Idea, EvolutionStep, FinancialStep, IdeaComment, CollaborationRequest, \
-    IdeaAttachmentFile, IdeaLikes, OfficialInformation, SavedIdea
+    IdeaAttachmentFile, IdeaLikes, OfficialInformation, SavedIdea, Donation
+
 from ideagram.ideas.selectors import get_idea_by_uuid
 
 from ideagram.profiles.models import Profile
@@ -114,6 +115,10 @@ def add_attachment_file(*, idea: Idea, data: dict) -> IdeaAttachmentFile | None:
 
 
 @transaction.atomic
+def add_donation(*, profile: Profile, idea: Idea, amount: int):
+    Donation.objects.create(profile=profile, idea=idea, amount=amount)
+
+    
 def create_official_information(*, idea: Idea, information_data: dict) -> OfficialInformation | None:
     if OfficialInformation.objects.filter(idea=idea).count() >= 5:
         return None

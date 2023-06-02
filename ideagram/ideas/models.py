@@ -123,6 +123,14 @@ class IdeaAttachmentFile(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
 
+
+class Donation(models.Model):
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    amount = models.PositiveIntegerField()
+    date = models.DateField(auto_now_add=True)
+
+
 class OfficialInformation(models.Model):
     idea = models.ForeignKey(Idea, on_delete=models.CASCADE)
     uuid = models.UUIDField(editable=False, default=uuid.uuid4)
@@ -138,3 +146,4 @@ class SavedIdea(models.Model):
 
     class Meta:
         unique_together = ("profile", "idea")
+

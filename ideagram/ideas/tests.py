@@ -114,44 +114,49 @@ class TestIdeaUpdate(TestCase):
         self.assertNotEqual(max_donation1, idea.max_donation)
 
 
-# class TestIdeaEvolutionStep(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=3)
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "por kon piale Ra",
-#             "goal": "release music",
-#             "abstract": "a song. Classic & Cultural",
-#             "description": "artist: Mohammad Reza Shajarian",
-#             "image": "",
-#             "max_donation": 27000,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#     def test_evolution_create(self):
-#         idea = Idea.objects.get(pk=self.idea.pk)
-#
-#         data = {
-#             "title": "write Notes",
-#             "finish_date": "2023-07-02",
-#             "description": "our song writer will write notes and give it to the orchestra",
-#             "priority": 1
-#         }
-#
-#         ev_step = create_evolution_step(idea=idea, evolution_data=data)
-#
-#         is_exists = EvolutionStep.objects.filter(pk=ev_step.pk).exists()
-#         self.assertTrue(is_exists)
-#
-#         self.ev = ev_step
-#
-#
+class TestIdeaEvolutionStep(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com",
+                                                 password="user",
+                                                 is_active=True, is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+        class_music = Classification.objects.create(title='music')
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "por kon piale Ra",
+            "goal": "release music",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Mohammad Reza Shajarian",
+            "image": "",
+            "max_donation": 27000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+    def test_evolution_create(self):
+        idea = Idea.objects.get(pk=self.idea.pk)
+
+        data = {
+            "title": "write Notes",
+            "finish_date": "2023-07-02",
+            "description": "our song writer will write notes and give it to the orchestra",
+            "priority": 1
+        }
+
+        ev_step = create_evolution_step(idea=idea, evolution_data=data)
+
+        is_exists = EvolutionStep.objects.filter(pk=ev_step.pk).exists()
+        self.assertTrue(is_exists)
+
+        self.ev = ev_step
+
+
 #
 # class TestIdeaEvolutionUpdate(TestCase):
 #     def setUp(self) -> None:

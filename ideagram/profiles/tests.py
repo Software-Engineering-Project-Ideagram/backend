@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from ideagram.profiles.models import Profile, Following
-from ideagram.profiles.services import follow_profile,register,update_user_profile
+from ideagram.profiles.services import follow_profile, register, update_user_profile, add_social_media_to_profile
 from ideagram.users.Exceptions import InvalidPassword
 from ideagram.users.models import BaseUser
 
@@ -104,3 +104,36 @@ class UpdateProfileTest(TestCase):
 
         user= update_user_profile(profile=Profile.objects.get(username="user1"),data=data)
         self.assertEqual(str(type(user)),"<class 'ideagram.profiles.models.Profile'>")
+
+    def test_change_profile_address(self):
+        old_address = {"country": "country1", "state": "state1", "city": "city1", "address": "address1",
+                       "zip_code": "zip_code1"}
+
+        data = {"address": old_address}
+
+        old_profile = Profile.objects.get(username="user1")
+        new_profile = update_user_profile(profile=old_profile, data=data)
+
+        self.assertEquals(new_profile.address.country, old_address["country"])
+        self.assertEquals(new_profile.address.state, old_address["state"])
+        self.assertEquals(new_profile.address.city, old_address["city"])
+        self.assertEquals(new_profile.address.address, old_address["address"])
+        self.assertEquals(new_profile.address.zip_code, old_address["zip_code"])
+
+    def test_validate_link_url(self):
+        data1 = {"type": "telegram", "link": "test"}
+        data2 = {"type": "telegram", "link": "https://telegram.com"}
+        profile = Profile.objects.get(username="user1")
+        with self.assertRaises(ValidationError):
+            link = add_social_media_to_profile(profile=profile, data=data1)
+
+        link = add_social_media_to_profile(profile=profile, data=data2)
+        self.assertEqual(link.link, "https://telegram.com")
+        self.assertEqual(link.type, "telegram")
+
+    def test_duplicated_link(self):
+        data = {"type": "instagram", "link": "https://instagram.com"}
+        profile = Profile.objects.get(username="user1")
+        link = add_social_media_to_profile(profile=profile, data=data)
+        with self.assertRaises(ValidationError):
+            link = add_social_media_to_profile(profile=profile, data=data)

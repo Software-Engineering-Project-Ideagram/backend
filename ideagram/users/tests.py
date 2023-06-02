@@ -33,6 +33,20 @@ class BaseUserMethodTest(TestCase):
 
 
 
+class BaseUserTest(TestCase):
+    def test_creating_user_without_email(self):
+        with self.assertRaises(ValueError):
+            BaseUser.objects.create_user(email=None, password="baseuserTestPassword1",
+                                is_active=True, is_admin=False)
 
+    def test_not_saving_row_password(self):
+        user = BaseUser.objects.create_user(
+            email="user@gmail.com",
+            password="password",
+            is_active=True,
+            is_admin=False
+        )
+
+        self.assertNotEqual(user.password, 'password')
 
 

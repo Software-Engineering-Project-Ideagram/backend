@@ -16,14 +16,14 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
 
-  rabbitmq:
-    image: "rabbitmq:alpine"
-
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 30s
-      retries: 3
+#  rabbitmq:
+#    image: "rabbitmq:alpine"
+#
+#    healthcheck:
+#      test: rabbitmq-diagnostics -q ping
+#      interval: 30s
+#      timeout: 30s
+#      retries: 3
 
 
   redis:
@@ -38,7 +38,8 @@ services:
     command: bash ./docker/web_entrypoint.sh
     environment:
       - DATABASE_URL=psql://admin:sofeng-ideagram@1402@db:5432/ideagram
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+#      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_BROKER_URL=redis://redis:6379/0
       - SECRET_KEY=nplxe-n-lnb!)(9y1q5cyofl)f$8(w^m6-p!mb7k%a%(y51^ne
       - ALLOWED_HOSTS=127.0.0.1,localhost,api.iwantnet.space,5.35.100.42
       - SESSION_COOKIE_SECURE=0   #change this on main production
@@ -60,11 +61,12 @@ services:
       dockerfile: ./docker/production.Dockerfile
     command: celery -A config worker -l info --without-gossip --without-mingle --without-heartbeat -Q email
     ports:
-      - "587:587"
+      - "10203:587"
 
     environment:
       - DATABASE_URL=psql://admin:sofeng-ideagram@1402@db:5432/ideagram
-      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+#      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672//
+      - CELERY_BROKER_URL=redis://redis:6379/0
       - SECRET_KEY=nplxe-n-lnb!)(9y1q5cyofl)f$8(w^m6-p!mb7k%a%(y51^ne
       - ALLOWED_HOSTS=127.0.0.1,localhost,api.iwantnet.space,5.35.100.42
       - SESSION_COOKIE_SECURE=0   #change this on main production
@@ -76,7 +78,7 @@ services:
       - media_volume:/app/backend/media
     depends_on:
       - db
-      - rabbitmq
+#      - rabbitmq
     restart: on-failure
 
 

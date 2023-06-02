@@ -506,40 +506,48 @@ class IdeaLikeTest(TestCase):
         self.assertEqual(self.liker.pk, like.profile_id.pk)
 
 
-# class IdeaUnlikeTest(TestCase):
-#
-#     def setUp(self) -> None:
-#         profile = Profile.objects.get(pk=3)
-#         data = {
-#             "classification": [
-#                 2
-#             ],
-#             "title": "I Will Survive",
-#             "goal": "release music. the best song of the century",
-#             "abstract": "a song. Classic & Cultural",
-#             "description": "artist: Gloria Gaynor",
-#             "image": "",
-#             "max_donation": 30000,
-#             "show_likes": True,
-#             "show_views": True,
-#             "show_comments": True
-#         }
-#         self.idea = create_idea(profile=profile, data=data)
-#
-#         self.like_profile = Profile.objects.get(pk=4)
-#         self.like = like_idea(idea_uuid=self.idea, user_id=self.like_profile)
-#
-#     def test_idea_unlike(self):
-#
-#         is_exist = IdeaLikes.objects.filter(pk=self.like.pk).exists()
-#         self.assertTrue(is_exist)
-#
-#         unlike_idea(idea_uuid=self.idea.uuid, user=self.like_profile.user)
-#
-#         is_exist = IdeaLikes.objects.filter(pk=self.like.pk).exists()
-#         self.assertFalse(is_exist)
-#
-#
+class IdeaUnlikeTest(TestCase):
+
+    def setUp(self) -> None:
+        base_user = BaseUser.objects.create_user(email="user1@gmail.com", password="user", is_active=True,
+                                                 is_admin=False)
+        profile = Profile.objects.create(user=base_user, username="user1", is_public=True, is_active=True,
+                                          is_banned=False)
+
+        base_user2 = BaseUser.objects.create_user(email="user2@gmail.com", password="user", is_active=True,
+                                                  is_admin=False)
+        self.liker = Profile.objects.create(user=base_user2, username="user2", is_public=True, is_active=True,
+                                                is_banned=False)
+        class_music = Classification.objects.create(title='music')
+        data = {
+            "classification": [
+                class_music.pk
+            ],
+            "title": "I Will Survive",
+            "goal": "release music. the best song of the century",
+            "abstract": "a song. Classic & Cultural",
+            "description": "artist: Gloria Gaynor",
+            "image": "",
+            "max_donation": 30000,
+            "show_likes": True,
+            "show_views": True,
+            "show_comments": True
+        }
+        self.idea = create_idea(profile=profile, data=data)
+
+        self.like = like_idea(idea_uuid=self.idea, user_id=self.liker)
+
+    def test_idea_unlike(self):
+
+        is_exist = IdeaLikes.objects.filter(pk=self.like.pk).exists()
+        self.assertTrue(is_exist)
+
+        unlike_idea(idea_uuid=self.idea.uuid, user=self.liker.user)
+
+        is_exist = IdeaLikes.objects.filter(pk=self.like.pk).exists()
+        self.assertFalse(is_exist)
+
+
 # class SelectIdeaTest(TestCase):
 #
 #     def setUp(self) -> None:
